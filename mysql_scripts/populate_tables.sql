@@ -1,12 +1,25 @@
-/* Move to the database we're using. */
 USE CSE305;
 
-INSERT INTO person(first_name, last_name, username, password, email_address) VALUES 
-    ('John', 'Doe', 'JDoe', 'password', 'J.Doe@gmail.com'),
-    ('Dave', 'Shank', 'DShank', 'password', 'D.Shank@yahoo.com');
+INSERT INTO address (streetNumber, streetName, city, zipCode, country) VALUES
+    (5, "Somerset Drive", "Holbrook", "11741", "USA");
 
-INSERT INTO item (name, description, price, seller_id, quantity) VALUES 
-    ('toothbrush', 'a toothbrush', 34.44, 1, 4),
-    ('toothpaste', 'some tasty, tasty toothpaste', 23.21, 1, 4),
-    ('catfish', 'two animals in one', 29.99, 2, 7);
+INSERT INTO cart (price) VALUES
+    (0.0);
 
+INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES
+    ("Bob", "Admin", "password", "B.Admin@gmail.com", 1);
+
+INSERT INTO administrator (userId) VALUES
+    (1);
+
+INSERT INTO category (name, description) VALUES
+    ("Electronics", "Electric Things");
+
+INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES
+    ("TV", "a TV", 56.66, 1, 2, 1);
+
+/* We don't want to insert any purchases yet. */
+/* We don't want to insert any taken items yet. */
+
+INSERT INTO review (itemId, userId, rating, description) VALUES
+    (1, 1, 5, "A great tv wow.");
