@@ -10,7 +10,9 @@ CREATE TABLE address (
     streetName VARCHAR(20) NOT NULL,
     city VARCHAR(20) NOT NULL,
     zipCode VARCHAR(5) NOT NULL,
-    country VARCHAR(10) NOT NULL
+    country VARCHAR(10) NOT NULL,
+    CHECK (CHAR_LENGTH(zipCode) >= 5),
+    CHECK (streetNumber > 0)
 );
 
 CREATE TABLE cart (
