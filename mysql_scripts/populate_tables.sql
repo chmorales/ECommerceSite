@@ -7,7 +7,7 @@ INSERT INTO cart (price) VALUES
     (0.0);
 
 INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES
-    ("Bob", "Admin", "password", "B.Admin@gmail.com", 1);
+    ("Bob", "Admin", "pa", "B.Admin@gmail.com", 1);
 
 INSERT INTO administrator (userId) VALUES
     (1);
