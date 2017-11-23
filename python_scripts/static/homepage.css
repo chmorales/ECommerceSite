@@ -1,0 +1,33 @@
+#banner {
+	background-color: gray;
+	text-align: center;
+	border-style: solid;
+    border-width: medium;
+    border-radius: 10px;
+    padding-bottom: 10px;
+}
+
+#account_handler {
+	padding-top: 20px;
+	padding-bottom: 20px;
+}
+
+.button_holder {
+	text-align: center;
+	display: block;
+	margin: auto;
+}
+
+.row {
+	display: flex;
+}
+
+.col {
+	flex: 1;
+}
+
+.section {
+	border-style: solid;
+	border-color: black;
+	border-width: 2px;
+}
