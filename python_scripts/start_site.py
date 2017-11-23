@@ -16,7 +16,7 @@ def hello(name):
 def create_account():
     if request.method == 'POST':
         # Going to have to figure something out about this. Everyone's database will have a different root password. 
-        cnx = mysql.connector.connect(user='root', password='tl35tl35', host='127.0.0.1', database='CSE305')
+        cnx = mysql.connector.connect(user='root', password='$ombraM@inBTW', host='104.196.6.60', database='CSE305')
         cursor = cnx.cursor()
 
         # We need the email address, the password, the firstname, and the lastname. 
@@ -54,7 +54,7 @@ def create_account():
 def login():
     error = None
     if request.method == 'POST':
-        cnx = mysql.connector.connect(user='root', password='tl35tl35', host='127.0.0.1', database='CSE305')
+        cnx = mysql.connector.connect(user='root', password='$ombraM@inBTW', host='104.196.6.60', database='CSE305')
         cursor = cnx.cursor(buffered=True)
         email_address = request.form['email']
         password = request.form['password']
