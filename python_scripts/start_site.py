@@ -1,5 +1,5 @@
 from flask import Flask, flash, redirect, render_template, request, session, abort, redirect, url_for
-import mysql.connector
+import pymysql
 from db_connector import get_connector
 
 app = Flask(__name__)
@@ -82,6 +82,86 @@ def index():
 def hello():
     return render_template('test.html')
 
+class Item:
+    def __init__(self, item_id, name, description, price, seller, quantity, category):
+        self.item_id = item_id
+        self.name = name
+        self.description = description
+        self.price = price
+        self.seller = seller
+        self.quantity = quantity
+        self.category = category
+
+class Review:
+    def __init__(self, rating, description, first_name, last_name):
+        self.rating = rating
+        self.description = description
+        self.first_name = first_name
+        self.last_name = last_name
+
+@app.route('/item/<int:item_id>', methods=['GET', 'POST'])
+def item_page(item_id):
+    # Gets database connection.
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # Gets relevant information from item table.
+    query = 'SELECT i.name, i.description, i.price, i.seller_id, i.quantity, i.category_id FROM item i WHERE i.id = %s;'
+    data = (item_id, )
+    cursor.execute(query, data)
+
+    # Walks through result, setting up object.
+    item = None
+    for (name, description, price, seller_id, quantity, category_id) in cursor:
+        # Gets another database connection.
+        cnx2 = get_connector()
+        cursor2 = cnx2.cursor()
+
+        # Gets the seller's email address.
+        query = 'SELECT s.email_address FROM person s WHERE s.id = %s;'
+        data = (seller_id, )
+        cursor2.execute(query, data)
+        email = None
+        for (user, ) in cursor2:
+            email = user
+
+        # Gets the actual name of the category. 
+        query = 'SELECT c.name FROM category c WHERE c.id = %s;'
+        data = (category_id, )
+        cursor2.execute(query, data)
+        category = None
+        for (category_name, ) in cursor2:
+            category = category_name
+
+        # Creates the full Item object.
+        item = Item(item_id, name, description, price, email, quantity, category)
+        cnx2.close()
+
+    # Gets the relevant review information.
+    query = ('SELECT r.rating, r.description, r.userId FROM review r WHERE r.itemId = %s;')
+    data = (item_id, )
+    cursor.execute(query, data)
+
+    # Iterates through the cursor information to construct the Review object.
+    reviews = []
+    for (rating, description, user_id) in cursor:
+        cnx2 = get_connector()
+        cursor2 = cnx2.cursor()
+        # Gets the first and last name of the person who wrote the review.
+        query = ('SELECT p.first_name, p.last_name FROM person p WHERE p.id = %s')
+        data = (user_id, )
+        cursor2.execute(query, data)
+        for (first_name, last_name) in cursor2:
+            fn = first_name
+            ln = last_name
+
+        # Appends the Review item to the list of reviews.
+        reviews.append(Review(rating, description, fn, ln))
+        cnx2.close()
+    cnx.close()
+
+    return render_template('item.html', item=item, ratings=reviews)
+
 @app.route('/sell_item', methods=['GET', 'POST'])
 def sell_item():
     if request.method == 'POST':
@@ -108,51 +188,6 @@ def sell_item():
 
         cnx.close()
     return render_template('sell_item.html')
-
-class Review:
-    def __init__(self, rating, description, first_name, last_name):
-        self.rating = rating
-        self.description = description
-        self.first_name = first_name
-        self.last_name = last_name
-
-@app.route('/reviews/<int:item_id>', methods=['GET', 'POST'])
-def reviews(item_id):
-    # Gets the database connector and the cursor.
-    cnx = get_connector()
-    cursor = cnx.cursor()
-    
-    # Gets the name of the item being reviewed.
-    query = ('SELECT i.name FROM item i WHERE i.id = %s;')
-    data = (item_id, )
-    cursor.execute(query, data)
-    for (item_name, ) in cursor:
-        item = item_name
-
-    # Gets the relevant review information.
-    query = ('SELECT r.rating, r.description, r.userId FROM review r WHERE r.itemId = %s;')
-    data = (item_id, )
-    cursor.execute(query, data)
-
-    # Iterates through the cursor information to construct the Review object.
-    reviews = []
-    for (rating, description, user_id) in cursor:
-        # Gets the first and last name of the person who wrote the review.
-        cnx2 = get_connector()
-        cursor2 = cnx2.cursor()
-        query = ('SELECT p.first_name, p.last_name FROM person p WHERE p.id = %s')
-        data = (user_id, )
-        cursor2.execute(query, data)
-        for (first_name, last_name) in cursor2:
-            fn = first_name
-            ln = last_name
-
-        # Appends the Review item to the list of reviews.
-        reviews.append(Review(rating, description, fn, ln))
-        cnx2.close()
-    cnx.close()
-
-    return render_template('reviews.html', ratings=reviews, item_name=item)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
