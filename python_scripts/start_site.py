@@ -1,5 +1,6 @@
 from flask import Flask, flash, redirect, render_template, request, session, abort, redirect, url_for
 import mysql.connector
+from db_connector import get_connector
 
 app = Flask(__name__)
 app.secret_key = '$ombraM@inBTW'
@@ -9,7 +10,7 @@ def index():
     if request.method == 'POST':
         if 'create_account' in request.form:
             # Going to have to figure something out about this. Everyone's database will have a different root password. 
-            cnx = mysql.connector.connect(user='root', password='tl35tl35', host='localhost', database='CSE305')
+            cnx = get_connector()
             cursor = cnx.cursor()
 
             # We need the email address, the password, the firstname, and the lastname. 
@@ -28,24 +29,28 @@ def index():
             cnx.commit()
 
             # The one we just added will be the last one, AKA the max.
-            query = 'SELECT MAX(id) FROM cart'
+            query = 'SELECT MAX(id) FROM cart;'
             cursor.execute(query)
             cart_id = int(cursor.fetchall()[0][0])
 
             # Insert the new user into the database.
-            query = "INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, %s)"
+            query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, %s);'
             values = (first_name, last_name, password, email_address, cart_id)
             cursor.execute(query, values)
+
+            query = 'SELECT MAX(id) FROM person;'
+            cursor.execute(query)
+            user_id = int(cursor.fetchall()[0][0])
+            session['user_id'] = user_id
 
             # Commit and close.
             cnx.commit()
             cnx.close()
 
-            session['user_id'] = user_id
             return redirect(url_for('hello'))
 
         if 'log_in' in request.form:
-            cnx = mysql.connector.connect(user='root', password='tl35tl35', host='localhost', database='CSE305')
+            cnx = get_connector()
             cursor = cnx.cursor(buffered=True)
             email_address = request.form['email']
             password = request.form['password']
