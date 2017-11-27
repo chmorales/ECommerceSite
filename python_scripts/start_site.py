@@ -72,7 +72,7 @@ def hello():
 @app.route('/sell_item', methods=['GET', 'POST'])
 def sell_item():
     if request.method == 'POST':
-        cnx = mysql.connector.connect(user='root', password='$ombraM@inBTW', host='104.196.6.60', database='CSE305')
+        cnx = get_connector()
         cursor = cnx.cursor()
 
         name = request.form['name']
@@ -87,7 +87,7 @@ def sell_item():
         # cursor.execute(query, data)
         # category_id = int(cursor.fetchall()[0][0])
 
-        query = 'INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s)'
+        query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s)"
         data = (name, description, price, session['user_id'], quantity, category_id)
         cursor.execute(query, data)
 
@@ -96,9 +96,24 @@ def sell_item():
         cnx.close()
     return render_template('sell_item.html')
 
-@app.route('/reviews')
-def reviews():
-	return render_template('reviews.html', reviews=['tony', 'test', 'karl'])
+@app.route('/reviews/<int:item_id>', methods=['GET', 'POST'])
+def reviews(item_id):
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    query = ('SELECT r.rating, r.description FROM review r WHERE r.itemId = %s;')
+    data = (item_id, )
+    cursor.execute(query, data)
+
+    ratings = []
+    descriptions = []
+    for (rating, description) in cursor:
+        ratings.append(rating)
+        descriptions.append(description)
+
+    cnx.close()
+
+    return render_template('reviews.html', ratings=ratings, descriptions=descriptions)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
