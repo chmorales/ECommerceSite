@@ -7,6 +7,7 @@ app.secret_key = '$ombraM@inBTW'
   
 @app.route("/", methods=['GET', 'POST'])
 def index():
+    error = None
     if request.method == 'POST':
         if 'create_account' in request.form:
             # Going to have to figure something out about this. Everyone's database will have a different root password. 
@@ -52,8 +53,8 @@ def index():
         if 'log_in' in request.form:
             cnx = get_connector()
             cursor = cnx.cursor(buffered=True)
-            email_address = request.form['email']
-            password = request.form['password']
+            email_address = request.form['email2']
+            password = request.form['password2']
 
             # Doing it this way prevents an injection attack (allegedly).
             query = ("SELECT u.first_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
@@ -62,8 +63,9 @@ def index():
             for (first_name, user_id) in cursor:
                 session['user_id'] = user_id
                 return redirect(url_for('hello'))
+            error = 'Invalid email/password combination.' 
         cnx.close()
-    return render_template('homepage.html')
+    return render_template('homepage.html', error=error)
        
 @app.route("/hello")
 def hello():

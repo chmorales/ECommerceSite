@@ -48,7 +48,9 @@
                 <input type="password" placeholder="Password" name="password" value="{{ request.form.password }}">
               </div>
             </div>
-            <input class="button" type="submit" name="create_account" value="Create Account">
+            <div class="button_holder">
+              <input type="submit" name="create_account" value="Create Account">
+            </div>
           </form>
         </div>
       </div>
@@ -61,7 +63,7 @@
                 Email Address:
               </div>
               <div class="col">
-                <input type="text" placeholder="Email Address" name="email" value="{{ request.form.email }}">
+                <input type="text" placeholder="Email Address" name="email2" value="{{ request.form.email2 }}">
               </div>
             </div>
             <div class="row">
@@ -69,11 +71,16 @@
                 Password:
               </div>
               <div class="col">
-                <input type="password" placeholder="Password" name="password" value="{{ request.form.password }}">
+                <input type="password" placeholder="Password" name="password2" value="{{ request.form.password2 }}">
               </div>
             </div>
             <div class="button_holder">
               <input type="submit" name="log_in" value="Log In">
+            </div>
+            <div style="text-align: center">
+              {% if error %}
+                <p class=error><strong>Error:</strong> {{ error }}
+              {% endif %}
             </div>
           </form>
         </div>
