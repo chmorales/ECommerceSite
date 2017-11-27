@@ -73,6 +73,7 @@ CREATE TABLE purchase (
 CREATE TABLE takenItem (
     itemId INT NOT NULL,
     cartId INT NOT NULL,
+    quantity INT NOT NULL,
     FOREIGN KEY (itemId) REFERENCES item(id),
     FOREIGN KEY (cartId) REFERENCES cart(id)
 );

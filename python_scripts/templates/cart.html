@@ -1,0 +1,35 @@
+<html>
+  <head>
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='homepage.css') }}">
+  </head>
+  <body>
+
+    <div id="banner">
+        <h1> Shopping Cart </h1>
+    </div>
+
+    {% for item in items %}
+    <div class="row">
+      <div class="col section">
+        <p> {{ item.name}} </p>
+      </div>
+      <div class="col section">
+        <p> {{ item.description }} </p>
+      </div>
+      <div class="col section">
+        <p> {{ item.price }} </p>
+      </div>
+      <div class="col section">
+        <p> {{ item.seller}} </p>
+      </div>
+      <div class="col section">
+        <p> {{ item.quantity}} </p>
+      </div>
+    </div>
+    {% else %}
+    <p> No results! Maybe try another search! </p>
+    {% endfor %}
+
+  </body>
+</html>

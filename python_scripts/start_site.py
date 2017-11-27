@@ -2,6 +2,23 @@ from flask import Flask, flash, redirect, render_template, request, session, abo
 import pymysql
 from db_connector import get_connector
 
+class Item:
+    def __init__(self, item_id, name, description, price, seller, quantity, category):
+        self.item_id = item_id
+        self.name = name
+        self.description = description
+        self.price = price
+        self.seller = seller
+        self.quantity = quantity
+        self.category = category
+
+class Review:
+    def __init__(self, rating, description, first_name, last_name):
+        self.rating = rating
+        self.description = description
+        self.first_name = first_name
+        self.last_name = last_name
+
 app = Flask(__name__)
 app.secret_key = '$ombraM@inBTW'
   
@@ -63,7 +80,7 @@ def index():
 
         if 'log_in' in request.form:
             cnx = get_connector()
-            cursor = cnx.cursor(buffered=True)
+            cursor = cnx.cursor()
             email_address = request.form['email2']
             password = request.form['password2']
 
@@ -78,26 +95,68 @@ def index():
         cnx.close()
     return render_template('homepage.html', error=error, create_error=create_error)
        
+
+@app.route("/cart", methods = ['GET', 'POST'])
+def shopping_cart():
+    # If the user is not logged on, they need to log in first.
+    if 'user_id' not in session:
+        print('not logged')
+        return redirect(url_for('index'))
+
+    # Gets the user's id from the session.
+    user_id = session['user_id']
+
+    # Get the database connection and the cursor.
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # Gets the current user's cartId.
+    curr_cart_id = None
+    query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
+    data = (user_id, )
+    cursor.execute(query, data)
+    for (cart_id, ) in cursor:
+        curr_cart_id = cart_id
+    
+    # Gets a list of item ids in the cart.
+    item_ids = []
+    quantities = {}
+    query = 'SELECT i.itemId, i.quantity FROM takenItem i WHERE i.cartId = %s;'
+    data = (curr_cart_id, )
+    cursor.execute(query, data)
+    for (item_id, quantity) in cursor:
+        item_ids.append(item_id)
+        quantities[item_id] = quantity
+
+    # Get the relevant information from the item table.
+    items = []
+    for item_id in item_ids:
+        query = 'SELECT i.name, i.description, i.price, i.seller_id FROM item i WHERE i.id = %s;'
+        data = (item_id, )
+        cursor.execute(query, data)
+        for (name, description, price, seller_id) in cursor:
+            # Get the email of the seller. 
+            cnx2 = get_connector()
+            cursor2 = cnx2.cursor()
+            query = 'SELECT p.email_address FROM person p WHERE p.id = %s;'
+            data = (seller_id, )
+            cursor2.execute(query, data)
+            email_address = None
+            for (email, ) in cursor2:
+                email_address = email
+
+            # Construct and append the object.
+            items.append(Item(item_id, name, description, price, email_address, quantities[item_id], None))
+
+    return render_template('cart.html', items=items)
+
+
+
 @app.route("/hello")
 def hello():
+    print(session['user_id'])
     return render_template('test.html')
 
-class Item:
-    def __init__(self, item_id, name, description, price, seller, quantity, category):
-        self.item_id = item_id
-        self.name = name
-        self.description = description
-        self.price = price
-        self.seller = seller
-        self.quantity = quantity
-        self.category = category
-
-class Review:
-    def __init__(self, rating, description, first_name, last_name):
-        self.rating = rating
-        self.description = description
-        self.first_name = first_name
-        self.last_name = last_name
 
 @app.route('/search', methods=['GET', 'POST'])
 def search():
@@ -126,6 +185,7 @@ def search_results(string):
     for (item_id, name, description, price, quantity) in cursor:
         items.append(Item(item_id, name, description, price, None, quantity, None))
         
+    cnx.close()
     return render_template('search_results.html', items = items, search_string = string)
 
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
@@ -133,6 +193,44 @@ def item_page(item_id):
     # Gets database connection.
     cnx = get_connector()
     cursor = cnx.cursor()
+
+    if request.method == 'POST':
+
+        if 'user_id' not in session:
+            return redirect(url_for('index'))
+        user_id = session['user_id']
+
+        # Decrease the number of availible items by 1.
+        query = 'UPDATE item SET quantity = quantity - 1 WHERE id = %s;'
+        data = (item_id, )
+        cursor.execute(query, data)
+
+        # Gets the current user's cart id.
+        query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
+        data = (user_id, )
+        cursor.execute(query, data)
+        cart_id = None
+        for (cart, ) in cursor:
+            cart_id = cart
+
+        exists = False
+        query = 'SELECT i.itemId FROM takenItem i WHERE i.itemId = %s;'
+        data = (item_id, )
+        cursor.execute(query, data)
+        for item in cursor:
+            exists = True
+
+        if exists:
+            query = 'UPDATE takenItem SET quantity = quantity + 1 WHERE itemId = %s;'
+            data = (item_id, )
+            cursor.execute(query, data)
+
+        if not exists:
+            query = 'INSERT INTO takenItem (itemId, cartId, quantity) VALUES (%s, %s, %s);'
+            data = (item_id, cart_id, 1)
+            cursor.execute(query, data)
+
+        cnx.commit()
 
     # Gets relevant information from item table.
     query = 'SELECT i.name, i.description, i.price, i.seller_id, i.quantity, i.category_id FROM item i WHERE i.id = %s;'
