@@ -68,7 +68,7 @@ def index():
 
                 return redirect(url_for('hello'))
 
-            except mysql.connector.errors.IntegrityError:
+            except pymysql.err.IntegrityError:
                 # Should only fire if the email address already exists in the database.
                 create_error = 'That email is already taken. Please try a new email.'
                 query = 'DELETE FROM cart WHERE id = %s;'
@@ -76,7 +76,6 @@ def index():
                 cursor.execute(query, data)
 
                 cnx.commit()
-                cnx.close()
 
         if 'log_in' in request.form:
             cnx = get_connector()
