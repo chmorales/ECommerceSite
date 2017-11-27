@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <title>Search Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='homepage.css') }}">
+  </head>
+  <body>
+
+    <div id="banner">
+        <h1> Search Page </h1>
+    </div>
+
+    <form action="" method="post">
+      <input type="text" placeholder="What are you looking for today?" name="search_string" value="{{ request.form.search_string }}">
+      <input class="btn btn-default" type="submit" value="Search">
+    </form>
+
+  </body>
+</html>

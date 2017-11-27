@@ -99,6 +99,35 @@ class Review:
         self.first_name = first_name
         self.last_name = last_name
 
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'POST':
+        search_string = request.form['search_string']
+        return redirect(url_for('search_results', string=search_string))
+    return render_template('search.html')
+
+@app.route('/search/<string:string>', methods=['GET', 'POST'])
+def search_results(string):
+    if request.method == 'POST':
+        search_string = request.form['search_string']
+        return redirect(url_for('search_results', string=search_string))
+    
+    # Get the database connection.
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # Search for any items with a name containing the search string.
+    query = 'SELECT i.id, i.name, i.description, i.price, i.quantity FROM item i WHERE i.name LIKE %s;'
+    data = ('%' + string + '%', )
+    cursor.execute(query, data)
+
+    # Save the results into a list of items.
+    items = []
+    for (item_id, name, description, price, quantity) in cursor:
+        items.append(Item(item_id, name, description, price, None, quantity, None))
+        
+    return render_template('search_results.html', items = items, search_string = string)
+
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
 def item_page(item_id):
     # Gets database connection.

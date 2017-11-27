@@ -1,0 +1,39 @@
+<html>
+  <head>
+    <title>Search Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='homepage.css') }}">
+  </head>
+  <body>
+
+    <div id="banner">
+        <h1> Search Page </h1>
+    </div>
+
+    <form action="" method="post">
+      <input type="text" placeholder="What are you looking for today?" name="search_string" value="{{ request.form.search_string }}">
+      <input class="btn btn-default" type="submit" value="Search">
+    </form>
+
+    <p> You searched for: "{{ search_string }}" </p>
+
+    {% for item in items %}
+    <div class="row">
+      <div class="col section">
+        <p> <a href="{{ url_for('item_page', item_id=item.item_id) }}"> {{ item.name}}  </a></p>
+      </div>
+      <div class="col section">
+        <p> {{ item.description }} </p>
+      </div>
+      <div class="col section">
+        <p> {{ item.price }} </p>
+      </div>
+      <div class="col section">
+        <p> {{ item.quantity }} </p>
+      </div>
+    </div>
+    {% else %}
+    <p> No results! Maybe try another search! </p>
+    {% endfor %}
+
+  </body>
+</html>
