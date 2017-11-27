@@ -51,6 +51,11 @@
             <div class="button_holder">
               <input type="submit" name="create_account" value="Create Account">
             </div>
+            <div style="text-align: center">
+              {% if create_error %}
+                <p class=error><strong>Error:</strong> {{ create_error }}
+              {% endif %}
+            </div>
           </form>
         </div>
       </div>

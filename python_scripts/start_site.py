@@ -8,6 +8,7 @@ app.secret_key = '$ombraM@inBTW'
 @app.route("/", methods=['GET', 'POST'])
 def index():
     error = None
+    create_error = None
     if request.method == 'POST':
         if 'create_account' in request.form:
             # Going to have to figure something out about this. Everyone's database will have a different root password. 
@@ -19,8 +20,6 @@ def index():
             password = request.form['password']
             first_name = request.form['first_name']
             last_name = request.form['last_name']
-
-            # TODO: Add checks for validity.
 
             # Create a new cart just for our user. 
             query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
@@ -34,21 +33,33 @@ def index():
             cursor.execute(query)
             cart_id = int(cursor.fetchall()[0][0])
 
-            # Insert the new user into the database.
-            query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, %s);'
-            values = (first_name, last_name, password, email_address, cart_id)
-            cursor.execute(query, values)
+            try:
+                # Insert the new user into the database.
+                query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, %s);'
+                data = (first_name, last_name, password, email_address, cart_id)
+                cursor.execute(query, data)
 
-            query = 'SELECT MAX(id) FROM person;'
-            cursor.execute(query)
-            user_id = int(cursor.fetchall()[0][0])
-            session['user_id'] = user_id
+                # Save the userId into the session.
+                query = 'SELECT MAX(id) FROM person;'
+                cursor.execute(query)
+                user_id = int(cursor.fetchall()[0][0])
+                session['user_id'] = user_id
 
-            # Commit and close.
-            cnx.commit()
-            cnx.close()
+                # Commit, close, and redirect.
+                cnx.commit()
+                cnx.close()
 
-            return redirect(url_for('hello'))
+                return redirect(url_for('hello'))
+
+            except mysql.connector.errors.IntegrityError:
+                # Should only fire if the email address already exists in the database.
+                create_error = 'That email is already taken. Please try a new email.'
+                query = 'DELETE FROM cart WHERE id = %s;'
+                data = (cart_id, )
+                cursor.execute(query, data)
+
+                cnx.commit()
+                cnx.close()
 
         if 'log_in' in request.form:
             cnx = get_connector()
@@ -65,7 +76,7 @@ def index():
                 return redirect(url_for('hello'))
             error = 'Invalid email/password combination.' 
         cnx.close()
-    return render_template('homepage.html', error=error)
+    return render_template('homepage.html', error=error, create_error=create_error)
        
 @app.route("/hello")
 def hello():
