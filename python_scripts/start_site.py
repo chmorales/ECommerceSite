@@ -96,6 +96,10 @@ def sell_item():
         cnx.close()
     return render_template('sell_item.html')
 
+@app.route('/reviews')
+def reviews():
+	return render_template('reviews.html', reviews=['tony', 'test', 'karl'])
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
 
