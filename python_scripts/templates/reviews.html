@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <title>Reviews Page</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='homepage.css') }}">
+  </head>
+  <body>
+    <div id="banner">
+        <h1> Reviews for {{ item_name }} </h1>
+    </div>
+
+
+    {% for rating in ratings %}
+    <div class="row">
+      <div class="col section">
+        <option value="{{ rating.rating }}">{{ rating.rating }} / 5</option>
+      </div>
+      <div class="col section">
+        <option value="{{ rating.description }}">{{ rating.description }}</option>
+      </div>
+      <div class="col section">
+          <option value="{{ rating.first_name }}">{{ rating.first_name }} {{rating.last_name }}</option>
+      </div>
+    </div>
+    {% endfor %}
+  </body>
+</html>

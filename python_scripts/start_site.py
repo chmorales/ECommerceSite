@@ -97,27 +97,49 @@ def sell_item():
     return render_template('sell_item.html')
 
 class Review:
-    def __init__(self, rating, description, user_id):
+    def __init__(self, rating, description, first_name, last_name):
         self.rating = rating
         self.description = description
-        self.user_id = user_id
+        self.first_name = first_name
+        self.last_name = last_name
 
 @app.route('/reviews/<int:item_id>', methods=['GET', 'POST'])
 def reviews(item_id):
+    # Gets the database connector and the cursor.
     cnx = get_connector()
     cursor = cnx.cursor()
+    
+    # Gets the name of the item being reviewed.
+    query = ('SELECT i.name FROM item i WHERE i.id = %s;')
+    data = (item_id, )
+    cursor.execute(query, data)
+    for (item_name, ) in cursor:
+        item = item_name
 
+    # Gets the relevant review information.
     query = ('SELECT r.rating, r.description, r.userId FROM review r WHERE r.itemId = %s;')
     data = (item_id, )
     cursor.execute(query, data)
 
+    # Iterates through the cursor information to construct the Review object.
     reviews = []
     for (rating, description, user_id) in cursor:
-        reviews.append(Review(rating, description, user_id))
+        # Gets the first and last name of the person who wrote the review.
+        cnx2 = get_connector()
+        cursor2 = cnx2.cursor()
+        query = ('SELECT p.first_name, p.last_name FROM person p WHERE p.id = %s')
+        data = (user_id, )
+        cursor2.execute(query, data)
+        for (first_name, last_name) in cursor2:
+            fn = first_name
+            ln = last_name
 
+        # Appends the Review item to the list of reviews.
+        reviews.append(Review(rating, description, fn, ln))
+        cnx2.close()
     cnx.close()
 
-    return render_template('reviews.html', ratings=reviews)
+    return render_template('reviews.html', ratings=reviews, item_name=item)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
