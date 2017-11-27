@@ -96,24 +96,28 @@ def sell_item():
         cnx.close()
     return render_template('sell_item.html')
 
+class Review:
+    def __init__(self, rating, description, user_id):
+        self.rating = rating
+        self.description = description
+        self.user_id = user_id
+
 @app.route('/reviews/<int:item_id>', methods=['GET', 'POST'])
 def reviews(item_id):
     cnx = get_connector()
     cursor = cnx.cursor()
 
-    query = ('SELECT r.rating, r.description FROM review r WHERE r.itemId = %s;')
+    query = ('SELECT r.rating, r.description, r.userId FROM review r WHERE r.itemId = %s;')
     data = (item_id, )
     cursor.execute(query, data)
 
-    ratings = []
-    descriptions = []
-    for (rating, description) in cursor:
-        ratings.append(rating)
-        descriptions.append(description)
+    reviews = []
+    for (rating, description, user_id) in cursor:
+        reviews.append(Review(rating, description, user_id))
 
     cnx.close()
 
-    return render_template('reviews.html', ratings=ratings, descriptions=descriptions)
+    return render_template('reviews.html', ratings=reviews)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
