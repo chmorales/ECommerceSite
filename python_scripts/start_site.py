@@ -99,7 +99,7 @@ def index():
     return render_template('homepage.html', error=error, create_error=create_error)
 
 
-@app.route("/cart", methods = ['GET', 'POST'])
+@app.route("/cart", methods=['GET', 'POST'])
 def shopping_cart():
     # If the user is not logged on, they need to log in first.
     if 'user_id' not in session:
