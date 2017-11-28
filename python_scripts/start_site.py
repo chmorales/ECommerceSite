@@ -199,35 +199,43 @@ def item_page(item_id):
             return redirect(url_for('index'))
         user_id = session['user_id']
 
-        # Decrease the number of availible items by 1.
-        query = 'UPDATE item SET quantity = quantity - 1 WHERE id = %s;'
+        query = 'SELECT i.quantity FROM item i WHERE i.id = %s;'
         data = (item_id, )
         cursor.execute(query, data)
+        num = None
+        for (result, ) in cursor:
+            num = result
 
-        # Gets the current user's cart id.
-        query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
-        data = (user_id, )
-        cursor.execute(query, data)
-        cart_id = None
-        for (cart, ) in cursor:
-            cart_id = cart
-
-        exists = False
-        query = 'SELECT i.itemId FROM takenItem i WHERE i.itemId = %s;'
-        data = (item_id, )
-        cursor.execute(query, data)
-        for item in cursor:
-            exists = True
-
-        if exists:
-            query = 'UPDATE takenItem SET quantity = quantity + 1 WHERE itemId = %s;'
+        if num > 0:
+            # Decrease the number of availible items by 1.
+            query = 'UPDATE item SET quantity = quantity - 1 WHERE id = %s;'
             data = (item_id, )
             cursor.execute(query, data)
 
-        if not exists:
-            query = 'INSERT INTO takenItem (itemId, cartId, quantity) VALUES (%s, %s, %s);'
-            data = (item_id, cart_id, 1)
+            # Gets the current user's cart id.
+            query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
+            data = (user_id, )
             cursor.execute(query, data)
+            cart_id = None
+            for (cart, ) in cursor:
+                cart_id = cart
+
+            exists = False
+            query = 'SELECT i.itemId FROM takenItem i WHERE i.itemId = %s;'
+            data = (item_id, )
+            cursor.execute(query, data)
+            for item in cursor:
+                exists = True
+
+            if exists:
+                query = 'UPDATE takenItem SET quantity = quantity + 1 WHERE itemId = %s;'
+                data = (item_id, )
+                cursor.execute(query, data)
+
+            if not exists:
+                query = 'INSERT INTO takenItem (itemId, cartId, quantity) VALUES (%s, %s, %s);'
+                data = (item_id, cart_id, 1)
+                cursor.execute(query, data)
 
         cnx.commit()
 
