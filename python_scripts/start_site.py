@@ -93,7 +93,7 @@ def index():
             error = 'Invalid email/password combination.'
         
         if 'search' in request.form:
-            search_string = request.form['search_string']
+            search_string = request.form['search']
             redirect(url_for('search_results', string=search_string))
 
         cnx.close()
