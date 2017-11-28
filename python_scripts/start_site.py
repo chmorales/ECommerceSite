@@ -90,7 +90,12 @@ def index():
             for (first_name, user_id) in cursor:
                 session['user_id'] = user_id
                 return redirect(url_for('hello'))
-            error = 'Invalid email/password combination.' 
+            error = 'Invalid email/password combination.'
+        
+        if 'search' in request.form:
+            search_string = request.form['search_string']
+            redirect(url_for('search_results', string=search_string))
+
         cnx.close()
     return render_template('homepage.html', error=error, create_error=create_error)
        
