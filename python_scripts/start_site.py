@@ -348,30 +348,46 @@ def item_page(item_id):
 
 @app.route('/sell_item', methods=['GET', 'POST'])
 def sell_item():
+    error = None
+
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
     if request.method == 'POST':
-        cnx = get_connector()
-        cursor = cnx.cursor()
 
-        name = request.form['name']
-        description = request.form['description']
-        price = float(request.form['price'])
-        quantity = int(request.form['quantity'])
-        category_id = 1
-        # category_name = request.form['category']
+        try:
+            name = request.form['name']
+            description = request.form['description']
+            price = float(request.form['price'])
+            quantity = int(request.form['quantity'])
+            category_name = request.form['categories']
+            
+            query = 'SELECT c.id FROM category c WHERE c.name = %s'
+            data = (category_name, )
+            cursor.execute(query, data)
+            category_id = None
+            for (category_id_result, ) in cursor:
+                category_id = category_id_result
 
-        # query = 'SELECT c.id FROM category c WHERE c.name = %s'
-        # data = (category_name)
-        # cursor.execute(query, data)
-        # category_id = int(cursor.fetchall()[0][0])
+            query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s)"
+            data = (name, description, price, session['user_id'], quantity, category_id)
+            cursor.execute(query, data)
 
-        query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s)"
-        data = (name, description, price, session['user_id'], quantity, category_id)
-        cursor.execute(query, data)
+            cnx.commit()
 
-        cnx.commit()
+        except ValueError:
+            error = 'Please enter valid numbers for the quantity and price.'
+    
+    query = 'SELECT c.name FROM category c;'
+    cursor.execute(query)
+    
+    categories = []
+    for (category, ) in cursor:
+        categories.append(category)
 
-        cnx.close()
-    return render_template('sell_item.html')
+    cnx.close()
+
+    return render_template('sell_item.html', error=error, categories=categories)
 
 
 if __name__ == "__main__":
