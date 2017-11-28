@@ -14,16 +14,17 @@
         <input type="text" placeholder="description" name="description" value="{{ request.form.description }}">
         <input type="text" placeholder="price" name="price" value="{{ request.form.price }}">
         <input type="text" placeholder="quantity" name="quantity" value="{{ request.form.quantity }}">
-        <!-- <select name="categories">
-          <option value ="electronics">Electronics</option>
-          <option value ="pets">Pets</option>
-        </select> -->
+        <select name="category" value="{{ request.form.category }}">
+          {% for category in categories %}
+            <option value="{{ category }}"> {{ category }} </option>
+          {% endfor %}
+        </select>
         <input class="btn btn-default" type="submit" value="Add Item">
       </form>
     </div> 
     <div style="text-align: center">
       {% if error %}
-        <p class=error><strong>Error:</strong> {{ error }}
+      <p class=error><strong>Error:</strong> {{ error }} </p>
       {% endif %}
     </div>
   </body>
