@@ -13,6 +13,9 @@ class Item:
         self.seller = seller
         self.quantity = quantity
         self.category = category
+        self.total_price = None
+        if self.price is not None and self.quantity is not None:
+            self.total_price = self.price * self.quantity
 
 
 class Review:
