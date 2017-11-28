@@ -94,7 +94,7 @@ def index():
         
         if 'search_input' in request.form:
             search_string = request.form['search_input']
-            redirect(url_for('search_results', string=search_string))
+            return redirect(url_for('search_results', string=search_string))
 
         cnx.close()
     return render_template('homepage.html', error=error, create_error=create_error)
