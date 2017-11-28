@@ -113,6 +113,9 @@ def shopping_cart():
     cnx = get_connector()
     cursor = cnx.cursor()
 
+    if request.method == 'POST':
+        pass
+
     # Gets the current user's cartId.
     curr_cart_id = None
     query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
@@ -152,6 +155,52 @@ def shopping_cart():
             items.append(Item(item_id, name, description, price, email_address, quantities[item_id], None))
 
     return render_template('cart.html', items=items)
+
+
+@app.route("/cart/remove/<int:item_id>", methods=['POST'])
+def remove_from_cart(item_id):
+    if 'user_id' not in session:
+        return redirect(url_for('index'))
+    user_id = session['user_id']
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # Getting the users cart id
+    query = "SELECT p.cartId FROM person p WHERE p.id = %s;"
+    data = (user_id, )
+    cursor.execute(query, data)
+    cart_id = None
+    for (cart, ) in cursor:
+        cart_id = cart
+
+    # Update the item listing to have one more
+    query = "UPDATE item SET quantity = quantity + 1 WHERE id = %s;"
+    data = (item_id, )
+    cursor.execute(query, data)
+
+    # Get the quantity of the item that's in the cart
+    query = "SELECT t.quantity FROM takenItem t WHERE t.itemId = %s AND t.cartId = %s;"
+    data = (item_id, cart_id)
+    cursor.execute(query, data)
+    quantity = None
+    for (quant, ) in cursor:
+        quantity = quant
+
+    # Sets the data for the last query
+    data = (item_id, cart_id)
+
+    if quantity == 1:
+        # If there was only one item left, remove it from the table
+        query = "DELETE FROM takenItem WHERE itemId = %s AND cartId = %s;"
+        cursor.execute(query, data)
+    else:
+        # Otherwise remove one of the item from the cart
+        query = "UPDATE takenItem SET quantity = quantity - 1 WHERE itemId = %s AND cartId = %s;"
+        cursor.execute(query, data)
+
+    cnx.commit()
+
+    return redirect(url_for('shopping_cart'))
 
 
 @app.route("/hello")
@@ -205,9 +254,7 @@ def item_page(item_id):
         user_id = session['user_id']
 
         # Decrease the number of availible items by 1.
-        print("\ngot here\n")
         query = 'UPDATE item SET quantity = quantity - 1 WHERE id = %s;'
-        print("\ngot here\n")
         data = (item_id, )
         cursor.execute(query, data)
 
@@ -227,13 +274,11 @@ def item_page(item_id):
             exists = True
 
         if exists:
-            print("\nIt thinks there was a taken item with the same id\n")
             query = 'UPDATE takenItem SET quantity = quantity + 1 WHERE itemId = %s;'
             data = (item_id, )
             cursor.execute(query, data)
 
         if not exists:
-            print("\nIt doesn't think there was a taken item with the same id\n")
             query = 'INSERT INTO takenItem (itemId, cartId, quantity) VALUES (%s, %s, %s);'
             data = (item_id, cart_id, 1)
             cursor.execute(query, data)
