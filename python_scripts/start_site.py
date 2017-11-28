@@ -290,30 +290,34 @@ def item_page(item_id):
 
 @app.route('/sell_item', methods=['GET', 'POST'])
 def sell_item():
+    error = None
     if request.method == 'POST':
         cnx = get_connector()
         cursor = cnx.cursor()
 
-        name = request.form['name']
-        description = request.form['description']
-        price = float(request.form['price'])
-        quantity = int(request.form['quantity'])
-        category_id = 1
-        # category_name = request.form['category']
+        try:
+            name = request.form['name']
+            description = request.form['description']
+            price = float(request.form['price'])
+            quantity = int(request.form['quantity'])
+            category_id = 1
 
-        # query = 'SELECT c.id FROM category c WHERE c.name = %s'
-        # data = (category_name)
-        # cursor.execute(query, data)
-        # category_id = int(cursor.fetchall()[0][0])
+            # category_name = request.form['category']
+            # query = 'SELECT c.id FROM category c WHERE c.name = %s'
+            # data = (category_name)
+            # cursor.execute(query, data)
+            # category_id = int(cursor.fetchall()[0][0])
 
-        query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s)"
-        data = (name, description, price, session['user_id'], quantity, category_id)
-        cursor.execute(query, data)
+            query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s)"
+            data = (name, description, price, session['user_id'], quantity, category_id)
+            cursor.execute(query, data)
 
-        cnx.commit()
+            cnx.commit()
 
-        cnx.close()
-    return render_template('sell_item.html')
+            cnx.close()
+        except ValueError:
+            error = 'Please enter valid numbers for the quantity and price.'
+    return render_template('sell_item.html', error=error)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
