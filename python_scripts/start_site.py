@@ -1,6 +1,7 @@
 from flask import Flask, flash, redirect, render_template, request, session, abort, redirect, url_for
 import pymysql
 from db_connector import get_connector
+from functools import wraps
 
 
 class Item:
@@ -28,6 +29,16 @@ class Review:
 
 app = Flask(__name__)
 app.secret_key = '$ombraM@inBTW'
+
+
+def requires_logged_in(func):
+    """ Decorates a function, requiring that the user be logged in """
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('index'))
+        return func(*args, **kwargs)
+    return wrapped
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -98,7 +109,7 @@ def index():
                 session['user_id'] = user_id
                 return redirect(url_for('hello'))
             error = 'Invalid email/password combination.'
-        
+
         if 'search_input' in request.form:
             search_string = request.form['search_input']
             return redirect(url_for('search_results', string=search_string))
@@ -207,6 +218,7 @@ def remove_from_cart(item_id):
         cursor.execute(query, data)
 
     cnx.commit()
+    cnx.close()
 
     return redirect(url_for('shopping_cart'))
 
@@ -360,6 +372,7 @@ def item_page(item_id):
 
 
 @app.route('/sell_item', methods=['GET', 'POST'])
+@requires_logged_in
 def sell_item():
     error = None
 
@@ -373,8 +386,8 @@ def sell_item():
             description = request.form['description']
             price = float(request.form['price'])
             quantity = int(request.form['quantity'])
-            category_name = request.form['categories']
-            
+            category_name = request.form['category']
+
             query = 'SELECT c.id FROM category c WHERE c.name = %s'
             data = (category_name, )
             cursor.execute(query, data)
@@ -390,10 +403,10 @@ def sell_item():
 
         except ValueError:
             error = 'Please enter valid numbers for the quantity and price.'
-    
+
     query = 'SELECT c.name FROM category c;'
     cursor.execute(query)
-    
+
     categories = []
     for (category, ) in cursor:
         categories.append(category)
