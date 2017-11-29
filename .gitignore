@@ -21,6 +21,9 @@
 # Swap files
 *.swp
 
+# Pyc files
+*.pyc
+
 # Ignore the python cache
 __pycache__
 
