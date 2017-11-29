@@ -24,10 +24,10 @@
                     <li><a href="#">Profile</a></li>
                 </ul>
                 <div class="col-md-3">
-                    <form class="navbar-form" role="search">
-                        <input type="text" class="form-control" placeholder="Search" name="search_input">
+                    <form class="navbar-form" method="post">
+                        <input type="text" class="form-control" placeholder="Search" name="search_input" value="{{ request.form.search_input }}">
                         <div class="input-group-btn">
-                            <button type="submit" name="search" class="btn btn-default"><i class="glyphicon glyphicon-search"></i></button>
+                            <button type="submit" class="btn btn-default"><i class="glyphicon glyphicon-search"></i></button>
                         </div>
                     </form>
                 </div>
