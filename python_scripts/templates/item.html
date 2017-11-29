@@ -48,7 +48,9 @@
             <div class="col-md-3"><p>Category: {{ item.category }}</p></div>
             <div class="col-md-3"><p>Vendor: {{ item.seller }}</p></div>
           </div>
-          <button type="submit" name="add_to_cart" class="btn btn-primary">Add to Cart</button>
+          <form method="post">
+            <button type="submit" name="add_to_cart" class="btn btn-primary">Add to Cart</button>
+          </form>
           <div class="page-header"><h3>Reviews</h3></div>
           {% for rating in ratings %}
           <div class="col-md-6">
