@@ -1,98 +1,111 @@
-<!DOCTYPE html>
-
+<!doctype html>
 <html>
-
-  <head>
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='homepage.css') }}">
-  </head>
-
-  <body>
-    <div id="banner">
-      <h1> Welcome to the Generic Shopping Site! </h1>
-      <p> We specialize in bringing you a generic shopping experience! </p>
-    </div>
-
-    <div class="row" id="account_handler">
-      <div class="col section">
-        <div id="create_account">
-          <form action="" method="post">
-            <div class="row">
-              <div class="col">
-                First Name:
-              </div>
-              <div class="col">
-                <input type="text" placeholder="First Name" name="first_name" value="{{ request.form.first_name }}">
-              </div>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        <!-- START NAVBAR -->
+        <nav class="navbar navbar-default">
+            <div class="navbar-header">
+                <button type="button" data-target="#navbarCollapse" data-toggle="collapse" class="navbar-toggle">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a href="https://www.google.com/search?q=generic" class="navbar-brand">SoGeneric</a>
             </div>
-            <div class="row">
-              <div class="col">
-                Last Name:
-              </div>
-              <div class="col">
-                <input type="text" placeholder="Last Name" name="last_name" value="{{ request.form.last_name }}">
-              </div>
+            <!-- Collection of nav links and other content for toggling -->
+            <div id="navbarCollapse" class="collapse navbar-collapse">
+                <ul class="nav navbar-nav">
+                    <li class="active"><a href="homepage.html">Home</a></li>
+                    <li><a href="#">Profile</a></li>
+                </ul>
+                <div class="col-md-3">
+                    <form class="navbar-form" method="post">
+                        <input type="text" class="form-control" placeholder="Search" name="search_input" value="{{ request.form.search_input }}">
+                        <div class="input-group-btn">
+                            <button type="submit" class="btn btn-default"><i class="glyphicon glyphicon-search"></i></button>
+                        </div>
+                    </form>
+                </div>
+                <ul class="nav navbar-nav navbar-right">
+                    <!-- <li><a href="#" data-toggle="collapse" data-target="#createUser_panel">Create Account</a></li>
+                    <li><a href="#" data-toggle="collapse" data-target="#login_panel">Login</a></li> -->
+                </ul>
             </div>
-            <div class="row">
-              <div class="col">
-                Email Address:
-              </div>
-              <div class="col">
-                <input type="text" placeholder="Email Address" name="email" value="{{ request.form.email }}">
-              </div>
+        </nav>
+        <div class="container" id="root">
+          <div class="row">
+            <div class="col-md-12">
+                <div class="panel panel-default">
+                    <div class="panel-heading"><h1>Generic Shopping Site</h1></div>
+                    <div class="panel-body">Welcome to the most generic shopping experience we could muster.</div>
+                </div>
             </div>
-            <div class="row">
-              <div class="col">
-                Password:
-              </div>
-              <div class="col">
-                <input type="password" placeholder="Password" name="password" value="{{ request.form.password }}">
-              </div>
+            <!-- Create User Panel containing form to create a user -->
+            <div class="col-md-6">
+                <div class="panel panel-default" id="createUser_panel">
+                    <div class="panel-heading"><h3>Create an Account with Us!</h3></div>
+                    <div class="panel-body" id="create_account">
+                        <form action="" method="post">
+                            <div class="form-group">
+                                <label for="createUser_firstName">First Name</label>
+                                <input type="text" class="form-control" id="createUser_firstName" name="first_name" placeholder="First Name" value="{{ request.form.first_name }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="createUser_lastName">Last Name</label>
+                                <input type="text" class="form-control" id="createUser_lastName" name="last_name" placeholder="Last Name" value="{{ request.form.last_name }}">
+                            </div>
+                            <div class="form-group">
+                                <label for="createUser_email">Email address</label>
+                                <input type="email" class="form-control" id="createUser_email" aria-describedby="emailHelp" name="email" placeholder="Enter email" value="{{ request.form.email }}">
+                                <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+                            </div>
+                            <div class="form-group">
+                               <label for="createUser_password">Password</label>
+                               <input type="password" class="form-control" id="createUser_password" placeholder="Password" name="password" value="{{ request.form.password }}">
+                            </div>
+                            <button type="submit" name="create_account" class="btn btn-primary">Create Account</button>
+                        </form>
+                    </div>
+                    {% if create_error %}
+                    <div class="panel panel-danger">
+                        <div class="panel-heading">Error!</div>
+                        <div class="panel-body">Email is already in use!</div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="button_holder">
-              <input type="submit" name="create_account" value="Create Account">
+            <div class="col-md-6">
+                <div class="panel panel-default" id="login_panel">
+                  <div class="panel-heading"><h3>Login Here</h3></div>
+                  <div class="panel-body" id="log_in">
+                    <form action="" method="post">
+                      <div class="form-group">
+                          <label for="login_email">Email address</label>
+                          <input type="email" class="form-control" id="login_email" aria-describedby="emailHelp" name="email2" placeholder="Enter email" value="{{ request.form.email2 }}">
+                      </div>
+                      <div class="form-group">
+                        <label for="login_password">Password</label>
+                        <input type="password" class="form-control" id="login_password" placeholder="Password" name="password2" value="{{ request.form.password2 }}">
+                      </div>
+                      <button type="submit" name="log_in" class="btn btn-primary">Log in</button>
+                    </form>
+                  </div>
+                </div>
+                {% if error %}
+                <div class="panel panel-danger">
+                    <div class="panel-heading"><h3>Error!</h3></div>
+                    <div class="panel-body">Wrong Username or Password.</div>
+                </div>
+                {% endif %}
             </div>
-            <div style="text-align: center">
-              {% if create_error %}
-                <p class=error><strong>Error:</strong> {{ create_error }}
-              {% endif %}
-            </div>
-          </form>
+          </div>
         </div>
-      </div>
-
-      <div class="col section">
-        <div id="create_account">
-          <form action="" method="post">
-            <div class="row">
-              <div class="col">
-                Email Address:
-              </div>
-              <div class="col">
-                <input type="text" placeholder="Email Address" name="email2" value="{{ request.form.email2 }}">
-              </div>
-            </div>
-            <div class="row">
-              <div class="col">
-                Password:
-              </div>
-              <div class="col">
-                <input type="password" placeholder="Password" name="password2" value="{{ request.form.password2 }}">
-              </div>
-            </div>
-            <div class="button_holder">
-              <input type="submit" name="log_in" value="Log In">
-            </div>
-            <div style="text-align: center">
-              {% if error %}
-                <p class=error><strong>Error:</strong> {{ error }}
-              {% endif %}
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <img src="{{ url_for('static', filename='generic_foods.jpg') }}" style="margin:auto; display:block; height:300px;"/>
-
-  </body>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </body>
 </html>

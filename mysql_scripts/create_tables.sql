@@ -50,7 +50,7 @@ CREATE TABLE category (
 CREATE TABLE item (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(20) NOT NULL,
-    description VARCHAR(100) NOT NULL,
+    description VARCHAR(200) NOT NULL,
     price FLOAT(10, 2) NOT NULL,
     seller_id INT NOT NULL,
     quantity INT NOT NULL,
