@@ -31,7 +31,7 @@ app = Flask(__name__)
 app.secret_key = '$ombraM@inBTW'
 
 
-def requires_logged_in(func):
+def requires_log_in(func):
     """ Decorates a function, requiring that the user be logged in """
     @wraps(func)
     def wrapped(*args, **kwargs):
@@ -119,12 +119,8 @@ def index():
 
 
 @app.route("/cart", methods=['GET', 'POST'])
+@requires_log_in
 def shopping_cart():
-    # If the user is not logged on, they need to log in first.
-    if 'user_id' not in session:
-        print('not logged')
-        return redirect(url_for('index'))
-
     # Gets the user's id from the session.
     user_id = session['user_id']
 
@@ -177,9 +173,8 @@ def shopping_cart():
 
 
 @app.route("/cart/remove/<int:item_id>", methods=['POST'])
+@requires_log_in
 def remove_from_cart(item_id):
-    if 'user_id' not in session:
-        return redirect(url_for('index'))
     user_id = session['user_id']
     cnx = get_connector()
     cursor = cnx.cursor()
@@ -372,7 +367,7 @@ def item_page(item_id):
 
 
 @app.route('/sell_item', methods=['GET', 'POST'])
-@requires_logged_in
+@requires_log_in
 def sell_item():
     error = None
 
