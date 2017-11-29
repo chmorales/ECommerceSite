@@ -228,7 +228,7 @@ def search():
 @app.route('/search/<string:string>', methods=['GET', 'POST'])
 def search_results(string):
     if request.method == 'POST':
-        search_string = request.form['search_string']
+        search_string = request.form['search_input']
         return redirect(url_for('search_results', string=search_string))
 
     # Get the database connection.
