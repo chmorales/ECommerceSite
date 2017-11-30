@@ -46,10 +46,13 @@ def user_id_decorator(func):
     @wraps(func)
     def temp_with_user_id(*args, **kwargs):
         user_id = None
+        logged_in = False
         if 'user_id' in session:
             user_id = session['user_id']
+            logged_in = True
 
         kwargs['user_id'] = user_id
+        kwargs['logged_in'] = logged_in
         return func(*args, **kwargs)
     return temp_with_user_id
 
