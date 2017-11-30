@@ -134,7 +134,7 @@ def index():
     return render_template('homepage.html', error=error, create_error=create_error)
 
 
-@app.route("/cart", methods=['GET', 'POST'])
+@app.route("/cart", methods=['GET'])
 @requires_log_in
 def shopping_cart():
     # Gets the user's id from the session.
