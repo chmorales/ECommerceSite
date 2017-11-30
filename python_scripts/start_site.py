@@ -171,20 +171,10 @@ def shopping_cart():
     # Get the relevant information from the item table.
     items = []
     for item_id in item_ids:
-        query = 'SELECT i.name, i.description, i.price, i.seller_id FROM item i WHERE i.id = %s;'
+        query = 'SELECT i.name, i.description, i.price, p.email_address FROM item i, person p WHERE i.seller_id = p.id AND i.id = %s;'
         data = (item_id, )
         cursor.execute(query, data)
-        for (name, description, price, seller_id) in cursor:
-            # Get the email of the seller.
-            cnx2 = get_connector()
-            cursor2 = cnx2.cursor()
-            query = 'SELECT p.email_address FROM person p WHERE p.id = %s;'
-            data = (seller_id, )
-            cursor2.execute(query, data)
-            email_address = None
-            for (email, ) in cursor2:
-                email_address = email
-
+        for (name, description, price, email_address) in cursor:
             # Construct and append the object.
             items.append(Item(item_id, name, description, price, email_address, quantities[item_id], None))
 
