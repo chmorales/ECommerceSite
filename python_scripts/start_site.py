@@ -41,6 +41,22 @@ def requires_log_in(func):
     return wrapped
 
 
+def user_id_decorator(func):
+    """ Wraps a function to add the user id to it's kwargs """
+    @wraps(func)
+    def temp_with_user_id(*args, **kwargs):
+        user_id = None
+        if 'user_id' in session:
+            user_id = session['user_id']
+
+        kwargs['user_id'] = user_id
+        return func(*args, **kwargs)
+    return temp_with_user_id
+
+
+render_template = user_id_decorator(render_template)
+
+
 @app.route("/", methods=['GET', 'POST'])
 def index():
     error = None
