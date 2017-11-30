@@ -46,10 +46,13 @@ def user_id_decorator(func):
     @wraps(func)
     def temp_with_user_id(*args, **kwargs):
         user_id = None
+        logged_in = False
         if 'user_id' in session:
             user_id = session['user_id']
+            logged_in = True
 
         kwargs['user_id'] = user_id
+        kwargs['logged_in'] = logged_in
         return func(*args, **kwargs)
     return temp_with_user_id
 
@@ -168,20 +171,10 @@ def shopping_cart():
     # Get the relevant information from the item table.
     items = []
     for item_id in item_ids:
-        query = 'SELECT i.name, i.description, i.price, i.seller_id FROM item i WHERE i.id = %s;'
+        query = 'SELECT i.name, i.description, i.price, p.email_address FROM item i, person p WHERE i.seller_id = p.id AND i.id = %s;'
         data = (item_id, )
         cursor.execute(query, data)
-        for (name, description, price, seller_id) in cursor:
-            # Get the email of the seller.
-            cnx2 = get_connector()
-            cursor2 = cnx2.cursor()
-            query = 'SELECT p.email_address FROM person p WHERE p.id = %s;'
-            data = (seller_id, )
-            cursor2.execute(query, data)
-            email_address = None
-            for (email, ) in cursor2:
-                email_address = email
-
+        for (name, description, price, email_address) in cursor:
             # Construct and append the object.
             items.append(Item(item_id, name, description, price, email_address, quantities[item_id], None))
 
@@ -444,6 +437,37 @@ def sell_item():
 
     return render_template('sell_item.html', error=error, categories=categories)
 
+@app.route('/review/<int:item_id>', methods=['GET', 'POST'])
+@requires_log_in
+def review(item_id):
+    error = None
+
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    if request.method == 'POST':
+    
+        try:
+            rating = int(request.form['rating'])
+            if rating > 5 or rating < 1:
+                raise ValueError
+            description = request.form['description']
+
+            query = "INSERT INTO review (itemId, userId, rating, description) VALUES (%s, %s, %s, %s);"
+            data = (item_id, session['user_id'], rating, description)
+            cursor.execute(query, data)
+
+            cnx.commit()
+
+        except ValueError:
+            error = 'Please enter a valid number for the rating, between 1 and 5 inclusive.'
+        
+    cnx.close()
+
+    return render_template('give_review.html', error=error)
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
+
+
