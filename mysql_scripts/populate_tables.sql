@@ -36,6 +36,9 @@ INSERT INTO item (name, description, price, seller_id, quantity, category_id) VA
 /* We don't want to insert any taken items yet. */
 
 INSERT INTO review (itemId, userId, rating, description) VALUES
-    (1, 1, 5, "A great tv wow.");
+    (1, 1, 5, "A great tv wow."),
+    (1, 2, 3, "It's alright at best."),
+    (2, 1, 2, "Doesn't work in bathtub."),
+    (1, 3, 4, "Helps me sleep at night.");
 
 INSERT INTO featuredItem (itemId) SELECT i.id FROM item i LIMIT 10;

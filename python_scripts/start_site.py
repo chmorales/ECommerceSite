@@ -428,6 +428,37 @@ def sell_item():
 
     return render_template('sell_item.html', error=error, categories=categories)
 
+@app.route('/review/<int:item_id>', methods=['GET', 'POST'])
+@requires_log_in
+def review(item_id):
+    error = None
+
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    if request.method == 'POST':
+    
+        try:
+            rating = int(request.form['rating'])
+            if rating > 5 or rating < 1:
+                raise ValueError
+            description = request.form['description']
+
+            query = "INSERT INTO review (itemId, userId, rating, description) VALUES (%s, %s, %s, %s);"
+            data = (item_id, session['user_id'], rating, description)
+            cursor.execute(query, data)
+
+            cnx.commit()
+
+        except ValueError:
+            error = 'Please enter a valid number for the rating, between 1 and 5 inclusive.'
+        
+    cnx.close()
+
+    return render_template('give_review.html', error=error)
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
+
+
