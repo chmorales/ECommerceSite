@@ -394,6 +394,24 @@ def sell_item():
             data = (name, description, price, session['user_id'], quantity, category_id)
             cursor.execute(query, data)
 
+            query = "SELECT MAX(i.id) FROM item i;"
+            cursor.execute(query)
+            item_id = None
+            for (result, ) in cursor:
+                item_id = result
+
+            query = "SELECT COUNT(*) FROM featuredItem;"
+            cursor.execute(query)
+            num = None
+            for (result, ) in cursor:
+                num = result
+            if num >= 10:
+                query = "DELETE FROM featuredItem ORDER BY id ASC LIMIT 1;"
+                cursor.execute(query)
+
+            query = "INSERT INTO featuredItem (itemId) VALUES (%s);"
+            data = (item_id, )
+            cursor.execute(query, data)
             cnx.commit()
 
         except ValueError:

@@ -89,4 +89,8 @@ CREATE TABLE review (
     CHECK (description <> '')
 );
 
-
+CREATE TABLE featuredItem (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    itemId INT NOT NULL,
+    FOREIGN KEY (itemId) REFERENCES item(id)
+);
