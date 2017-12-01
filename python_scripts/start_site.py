@@ -459,6 +459,10 @@ def review(item_id):
 
             cnx.commit()
 
+            cnx.close()
+
+            return redirect(url_for('item_page', item_id=item_id))
+
         except ValueError:
             error = 'Please enter a valid number for the rating, between 1 and 5 inclusive.'
         
@@ -466,6 +470,35 @@ def review(item_id):
 
     return render_template('give_review.html', error=error)
 
+class Purchase:
+        def __init__(self, item_id, item, date, price, seller, quantity):
+            self.item_id = item_id
+            self.item = item
+            self.date = date
+            self.price = price
+            self.seller = seller
+            self.quantity = quantity
+
+
+@app.route('/order_history', methods=['GET', 'POST'])
+@requires_log_in
+def order_history():
+    error = None
+
+    user_id = session['user_id']
+
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id;'
+    data = (user_id, )
+    cursor.execute(query, data)
+
+    purchases = []
+    for (item_id, item_name, purchase_date, price, email_address, quantity) in cursor:
+        purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
+
+    return render_template('order_history.html', error=error, purchases=purchases)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
