@@ -12,7 +12,20 @@
     <div id="navbarCollapse" class="collapse navbar-collapse">
         <ul class="nav navbar-nav">
             <li class="active"><a href="/">Home</a></li>
-            <li><a href="#">Profile</a></li>
+            <li><a href="/profile">
+                {% if logged_in %}
+                {{ first_name }}
+                {% else %}
+                Profile
+                {% endif %}
+            </a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+            {% if logged_in %}
+            <li><a href="/logout">Logout</a></li>
+            {% else %}
+            <li><a href="/login">Login / Create Account</a></li>
+            {% endif %}
         </ul>
         <div class="col-sm-3 col-md-3 pull-right">
             <form class="navbar-form" role="search" method="post">
@@ -24,8 +37,5 @@
                 </div>
             </form>
         </div>
-        <ul class="nav navbar-nav navbar-right">
-            
-        </ul>
     </div>
 </nav>
