@@ -7,6 +7,7 @@ import os
 UPLOAD_FOLDER = "static"
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
+
 class Item:
     def __init__(self, item_id, name, description, price, seller, quantity,
                  category):
@@ -33,6 +34,7 @@ class Review:
 app = Flask(__name__)
 app.secret_key = '$ombraM@inBTW'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
 
 def requires_log_in(func):
     """ Decorates a function, requiring that the user be logged in """
@@ -62,8 +64,10 @@ def user_id_decorator(func):
         return func(*args, **kwargs)
     return temp_with_user_id
 
+
 # Redefines render_template to inlude user_id and logged_in variables
 render_template = user_id_decorator(render_template)
+
 
 def get_item(item_id):
     cnx = get_connector()
@@ -77,8 +81,10 @@ def get_item(item_id):
     cnx.close()
     return item
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
@@ -97,19 +103,19 @@ def index():
 def login():
     error=None
     create_error=None
-    
+
     if request.method == 'POST':
         if 'login' in request.form:
             cnx = get_connector()
             cursor = cnx.cursor()
             email = request.form['login_email']
             password = request.form['login_password']
-            
+
             # Using prepared statements to prevent SQL injection
             query = ("SELECT u.first_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
             data = (email, password)
             cursor.execute(query, data)
-            
+
             for (first_name, user_id) in cursor:
                 session['user_id'] = user_id
                 session['first_name'] = first_name
@@ -126,37 +132,37 @@ def login():
             password = request.form['create_password']
             first_name = request.form['create_first_name']
             last_name = request.form['create_last_name']
-            
-            # Create a new cart just for our user. 
+
+            # Create a new cart just for our user.
             query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
             cursor.execute(query)
-            
+
             # Commit the newly added cart to the database.
             cnx.commit()
-            
+
             # The one we just added will be the last one, AKA the max.
             query = 'SELECT MAX(id) FROM cart;'
             cursor.execute(query)
             cart_id = int(cursor.fetchall()[0][0])
-            
+
             try:
                 # Insert the new user into the database.
                 query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, %s);'
                 data = (first_name, last_name, password, email_address, cart_id)
                 cursor.execute(query, data)
-                
+
                 # Save the userId into the session.
                 query = 'SELECT MAX(id) FROM person;'
                 cursor.execute(query)
                 user_id = int(cursor.fetchall()[0][0])
                 session['user_id'] = user_id
                 session['first_name'] = first_name
-                
+
                 # Commit, close, and redirect.
                 cnx.commit()
                 cnx.close()
                 return redirect(url_for('hello'))
-            
+
             except pymysql.err.IntegrityError:
                 # Should only fire if the email address already exists in the database.
                 create_error = 'That email is already taken. Please try a new email.'
@@ -202,7 +208,7 @@ def shopping_cart():
         cart_id = None
         for (result, ) in cursor:
             cart_id = result
-        
+
         # Insert a new cart into the system.
         query = 'INSERT INTO cart (price, userId) VALUES (%s, %s);'
         data = (0.0, user_id)
@@ -329,11 +335,40 @@ def hello():
     return render_template('test.html')
 
 
+@app.route('/sale_history', methods=['GET', 'POST'])
+@requires_log_in
+def sales():
+    error = None
+    cnx = get_connector()
+    cursor = cnx.cursor()
+    user_id = session['user_id']
+
+    # Get the items that have been sold by the current user, and their
+    query = ("SELECT i.id, i.name, i.price, t.quantity, p.purchaseDate "
+             "FROM item i, takenItem t, cart c, purchase p "
+             "WHERE i.id = t.itemId AND i.seller_id = %s AND c.id = p.cartId;")
+    data = (user_id, )
+    cursor.execute(query, data)
+
+    purchases = []
+
+    # Make a list of all the purchases we will be displaying.
+    for (item_id, item_name, price, quantity, purchase_date) in cursor:
+        purchases.append(Purchase(item_id=item_id, item=item_name,
+                                  date=purchase_date, price=price,
+                                  seller=None, quantity=quantity))
+
+    cnx.close()
+
+    return render_template('sale_history.html', error=error, purchases=purchases)
+
+
 @app.route('/search', methods=['POST'])
 def search():
     if request.method == 'POST':
         search_string = request.form['search_input']
         return redirect(url_for('search_results', string=search_string))
+
 
 @app.route('/search/<string:string>', methods=['GET', 'POST'])
 def search_results(string):
@@ -357,6 +392,7 @@ def search_results(string):
 
     cnx.close()
     return render_template('search_results.html', items=items, search_string=string)
+
 
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
 def item_page(item_id):
@@ -520,6 +556,7 @@ def sell_item():
 
     return render_template('sell_item.html', error=error, categories=categories)
 
+
 @app.route('/review/<int:item_id>', methods=['GET', 'POST'])
 @requires_log_in
 def review(item_id):
@@ -529,7 +566,7 @@ def review(item_id):
     cursor = cnx.cursor()
 
     if request.method == 'POST':
-    
+
         try:
             rating = int(request.form['rating'])
             if rating > 5 or rating < 1:
@@ -548,10 +585,11 @@ def review(item_id):
 
         except ValueError:
             error = 'Please enter a valid number for the rating, between 1 and 5 inclusive.'
-        
+
     cnx.close()
 
     return render_template('give_review.html', error=error)
+
 
 class Purchase:
         def __init__(self, item_id, item, date, price, seller, quantity):
@@ -582,6 +620,7 @@ def order_history():
         purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
 
     return render_template('order_history.html', error=error, purchases=purchases)
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
