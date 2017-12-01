@@ -542,7 +542,7 @@ def order_history():
     cnx = get_connector()
     cursor = cnx.cursor()
 
-    query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id;'
+    query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id ORDER BY p.purchaseDate DESC;'
     data = (user_id, )
     cursor.execute(query, data)
 
