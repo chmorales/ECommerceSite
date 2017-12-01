@@ -63,6 +63,18 @@ def user_id_decorator(func):
 # Redefines render_template to inlude user_id and logged_in variables
 render_template = user_id_decorator(render_template)
 
+def get_item(item_id):
+    cnx = get_connector()
+    cursor = cnx.cursor()
+    query = 'SELECT i.name, i.description, i.price, i.quantity, s.email_address, c.name FROM item i, person s, category c WHERE i.id = %s AND i.category_id = c.id AND i.seller_id = s.id;'
+    data = (item_id, )
+    cursor.execute(query, data)
+    item = None
+    for (name, description, price, quantity, email_address, category_name) in cursor:
+        item = Item(item_id, name, description, price, email_address, quantity, category_name)
+    cnx.close()
+    return item
+
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
@@ -75,9 +87,7 @@ def index():
         # for (item_id, name, description, price, quantity) in cursor:
         #     items.append(Item(item_id, name, description, price, None, quantity, None))
         for (feat_id, item_id) in cursor:
-            query = 'SELECT i.name, i.description, i.price, i.seller_id FROM item i WHERE i.id = %s;'
-            data = (item_id)
-            cursor.execute(query, data)
+            items.append(get_item(item_id)
         return render_template('homepage.html', items=items)
     if request.method == 'POST':
         if 'search_input' in request.form:
@@ -165,7 +175,6 @@ def login():
     return render_template('homepage.html', error=error, create_error=create_error)
 
 
-<<<<<<< HEAD
 @app.route('/logout')
 @requires_log_in
 def logout():
@@ -300,18 +309,6 @@ def search_results(string):
 
     cnx.close()
     return render_template('search_results.html', items=items, search_string=string)
-
-def get_item(item_id):
-    cnx = get_connector()
-    cursor = cnx.cursor()
-    query = 'SELECT i.name, i.description, i.price, i.quantity, s.email_address, c.name FROM item i, person s, category c WHERE i.id = %s AND i.category_id = c.id AND i.seller_id = s.id;'
-    data = (item_id, )
-    cursor.execute(query, data)
-    item = None
-    for (name, description, price, quantity, email_address, category_name) in cursor:
-        item = Item(item_id, name, description, price, email_address, quantity, category_name)
-    cnx.close()
-    return item
 
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
 def item_page(item_id):
