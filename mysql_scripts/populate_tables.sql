@@ -15,6 +15,11 @@ INSERT INTO person (first_name, last_name, password, email_address, cartId) VALU
     ("Chris", "Morales", "password", "cmorales@gmail.com", 3),
     ("Daniel", "Shank", "password", "dshank@gmail.com", 4);
 
+UPDATE cart SET userId = 1 WHERE id = 1;
+UPDATE cart SET userId = 2 WHERE id = 2;
+UPDATE cart SET userId = 3 WHERE id = 3;
+UPDATE cart SET userId = 4 WHERE id = 4;
+
 INSERT INTO administrator (userId) VALUES
     (1);
 
@@ -36,6 +41,9 @@ INSERT INTO item (name, description, price, seller_id, quantity, category_id) VA
 /* We don't want to insert any taken items yet. */
 
 INSERT INTO review (itemId, userId, rating, description) VALUES
-    (1, 1, 5, "A great tv wow.");
+    (1, 1, 5, "A great tv wow."),
+    (1, 2, 3, "It's alright at best."),
+    (2, 1, 2, "Doesn't work in bathtub."),
+    (1, 3, 4, "Helps me sleep at night.");
 
 INSERT INTO featuredItem (itemId) SELECT i.id FROM item i LIMIT 10;
