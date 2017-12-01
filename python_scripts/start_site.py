@@ -150,6 +150,7 @@ def login():
                 cursor.execute(query)
                 user_id = int(cursor.fetchall()[0][0])
                 session['user_id'] = user_id
+                session['first_name'] = first_name
                 
                 # Commit, close, and redirect.
                 cnx.commit()
