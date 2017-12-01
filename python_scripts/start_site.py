@@ -81,12 +81,11 @@ def index():
     if request.method == 'GET':
         cnx = get_connector()
         cursor = cnx.cursor()
-        query = ("SELECT * FROM featuredItem;")
+        query = ("SELECT itemId FROM featuredItem;")
         cursor.execute(query)
+
         items = []
-        # for (item_id, name, description, price, quantity) in cursor:
-        #     items.append(Item(item_id, name, description, price, None, quantity, None))
-        for (feat_id, item_id) in cursor:
+        for (item_id, ) in cursor:
             items.append(get_item(item_id)
         return render_template('homepage.html', items=items)
     if request.method == 'POST':
