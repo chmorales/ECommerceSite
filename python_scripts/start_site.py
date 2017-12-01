@@ -2,7 +2,10 @@ from flask import Flask, flash, redirect, render_template, request, session, abo
 import pymysql
 from db_connector import get_connector
 from functools import wraps
+import os
 
+UPLOAD_FOLDER = "static"
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 class Item:
     def __init__(self, item_id, name, description, price, seller, quantity,
@@ -29,7 +32,7 @@ class Review:
 
 app = Flask(__name__)
 app.secret_key = '$ombraM@inBTW'
-
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 def requires_log_in(func):
     """ Decorates a function, requiring that the user be logged in """
@@ -74,19 +77,20 @@ def get_item(item_id):
     cnx.close()
     return item
 
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
-    if request.method == 'GET':
-        cnx = get_connector()
-        cursor = cnx.cursor()
-        query = ("SELECT itemId FROM featuredItem;")
-        cursor.execute(query)
+    cnx = get_connector()
+    cursor = cnx.cursor()
+    query = ("SELECT itemId FROM featuredItem;")
+    cursor.execute(query)
 
-        items = []
-        for (item_id, ) in cursor:
-            items.append(get_item(item_id))
-        return render_template('homepage.html', items=items)
+    items = []
+    for (item_id, ) in cursor:
+        items.append(get_item(item_id))
+    return render_template('homepage.html', items=items)
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -94,8 +98,6 @@ def login():
     error=None
     create_error=None
     
-    if request.method == 'GET':
-        return render_template('login.html', error=error, create_error=create_error)
     if request.method == 'POST':
         if 'login' in request.form:
             cnx = get_connector()
@@ -113,6 +115,7 @@ def login():
                 session['first_name'] = first_name
                 return redirect(url_for('index'))
             error = 'Invalid email and password combonation.'
+            return render_template('login.html', error=error, create_error=create_error)
 
         elif 'create_account' in request.form:
             cnx = get_connector()
@@ -160,13 +163,14 @@ def login():
                 data = (cart_id, )
                 cursor.execute(query, data)
                 cnx.commit()
+                return render_template('login.html', error=error, create_error=create_error)
 
         elif 'search_input' in request.form:
             search_string = request.form['search_input']
             return redirect(url_for('search_results', string=search_string))
 
         cnx.close()
-    return render_template('homepage.html', error=error, create_error=create_error)
+    return render_template('login.html', error=error, create_error=create_error)
 
 
 @app.route('/logout')
@@ -424,7 +428,10 @@ def item_page(item_id):
         cnx2.close()
     cnx.close()
 
-    return render_template('item.html', item=item, ratings=reviews)
+    filename = str(item_id)
+    print(filename)
+
+    return render_template('item.html', item=item, ratings=reviews, filename = filename)
 
 
 @app.route('/sell_item', methods=['GET', 'POST'])
@@ -460,6 +467,10 @@ def sell_item():
             item_id = None
             for (result, ) in cursor:
                 item_id = result
+
+            f = request.files['file']
+            if f and allowed_file(f.filename):
+                f.save(os.path.join(app.config['UPLOAD_FOLDER'], str(item_id)))
 
             query = "SELECT COUNT(*) FROM featuredItem;"
             cursor.execute(query)

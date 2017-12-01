@@ -9,7 +9,7 @@
     <div class="container">
       <h1>Log in.</h1>
       <br>
-      <form action="" method="post">
+      <form method=post enctype=multipart/form-data>
         <input type="text" placeholder="name" name="name" value="{{ request.form.name }}">
         <input type="text" placeholder="description" name="description" value="{{ request.form.description }}">
         <input type="text" placeholder="price" name="price" value="{{ request.form.price }}">
@@ -19,6 +19,7 @@
             <option value="{{ category }}"> {{ category }} </option>
           {% endfor %}
         </select>
+        <input type=file name=file>
         <input class="btn btn-default" type="submit" value="Add Item">
       </form>
     </div> 
