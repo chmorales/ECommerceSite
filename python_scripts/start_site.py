@@ -468,9 +468,10 @@ def sell_item():
             for (result, ) in cursor:
                 item_id = result
 
-            f = request.files['file']
-            if f and allowed_file(f.filename):
-                f.save(os.path.join(app.config['UPLOAD_FOLDER'], str(item_id)))
+            if 'file' in request.files:
+                f = request.files['file']
+                if f and allowed_file(f.filename):
+                    f.save(os.path.join(app.config['UPLOAD_FOLDER'], str(item_id)))
 
             query = "SELECT COUNT(*) FROM featuredItem;"
             cursor.execute(query)
