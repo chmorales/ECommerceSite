@@ -59,7 +59,6 @@ def user_id_decorator(func):
         return func(*args, **kwargs)
     return temp_with_user_id
 
-
 # Redefines render_template to inlude user_id and logged_in variables
 render_template = user_id_decorator(render_template)
 
@@ -88,10 +87,6 @@ def index():
         for (item_id, ) in cursor:
             items.append(get_item(item_id))
         return render_template('homepage.html', items=items)
-    if request.method == 'POST':
-        if 'search_input' in request.form:
-            search_string = request.form['search_input']
-            return redirect(url_for('search_results', string=search_string))
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -278,19 +273,17 @@ def hello():
     return render_template('test.html')
 
 
-@app.route('/search', methods=['GET', 'POST'])
+@app.route('/search', methods=['POST'])
 def search():
     if request.method == 'POST':
-        search_string = request.form['search_string']
+        search_string = request.form['search_input']
         return redirect(url_for('search_results', string=search_string))
-    return render_template('search.html')
-
 
 @app.route('/search/<string:string>', methods=['GET', 'POST'])
 def search_results(string):
     if request.method == 'POST':
         search_string = request.form['search_input']
-        return redirect(url_for('search_results', string=search_string))
+        return redirect(url_for('search_results.html', string=search_string))
 
     # Get the database connection.
     cnx = get_connector()
