@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        {% include 'navbar.html' %}
+        <div class="container" id="root">
+          <div class="page-header"><h2>{{ item.name }}</h2></div>
+          <div class="row">
+            <div class="col-md-12"><p>{{ item.description }}</p></div>
+            <div class="col-md-3"><p>Price: {{ item.price }}</p></div>
+            <div class="col-md-3"><p>Quantity: {{ item.quantity }}</p></div>
+            <div class="col-md-3"><p>Category: {{ item.category }}</p></div>
+            <div class="col-md-3"><p>Vendor: {{ item.seller }}</p></div>
+          </div>
+          <form method="post">
+            <button type="submit" name="add_to_cart" class="btn btn-primary">Add to Cart</button>
+          </form>
+          <div class="page-header"><h3>Reviews</h3></div>
+          {% for rating in ratings %}
+          <div class="col-md-6">
+            <div class="panel panel-default">
+              <div class="panel-heading"><h4>{{ rating.first_name }} {{ rating.last_name }} gives this a {{ rating.rating }} out of 5</h4></div>
+              <div class="panel-body">{{ rating.description }}</div>
+            </div>
+          </div>
+          {% else %}
+          <h4>No reviews, be the first!</h4>
+          {% endfor %}
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </body>
+</html>
