@@ -86,7 +86,7 @@ def index():
 
         items = []
         for (item_id, ) in cursor:
-            items.append(get_item(item_id)
+            items.append(get_item(item_id))
         return render_template('homepage.html', items=items)
     if request.method == 'POST':
         if 'search_input' in request.form:
