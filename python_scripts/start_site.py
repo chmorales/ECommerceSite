@@ -177,7 +177,7 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route("/cart", methods=['GET'])
+@app.route("/cart", methods=['POST', 'GET'])
 @requires_log_in
 def shopping_cart():
     # Gets the user's id from the session.
@@ -187,8 +187,41 @@ def shopping_cart():
     cnx = get_connector()
     cursor = cnx.cursor()
 
+    # User is trying to buy the cart.
     if request.method == 'POST':
-        pass
+
+        # Get the current user's cartId.
+        query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
+        data = (user_id, )
+        cursor.execute(query, data)
+        cart_id = None
+        for (result, ) in cursor:
+            cart_id = result
+        
+        # Insert a new cart into the system.
+        query = 'INSERT INTO cart (price, userId) VALUES (%s, %s);'
+        data = (0.0, user_id)
+        cursor.execute(query, data)
+
+        # Get the newest added cart for the current user.
+        query = 'SELECT MAX(c.id) FROM cart c WHERE c.userId = %s;'
+        data = (user_id, )
+        cursor.execute(query, data)
+        cart_num = None
+        for (result, ) in cursor:
+            cart_num = result
+
+        # Update the user's cart to that one.
+        query = 'UPDATE person SET cartId = %s WHERE id = %s;'
+        data = (cart_num, user_id)
+        cursor.execute(query, data)
+
+        # Put the old cart into a saved purchase slot.
+        query = 'INSERT INTO purchase (buyerId, cartId, purchaseDate) VALUES (%s, %s, NOW());'
+        data = (user_id, cart_id)
+        cursor.execute(query, data)
+
+        cnx.commit()
 
     # Gets the current user's cartId.
     curr_cart_id = None
@@ -314,12 +347,18 @@ def item_page(item_id):
             return redirect(url_for('index'))
         user_id = session['user_id']
 
-        query = 'SELECT i.quantity FROM item i WHERE i.id = %s;'
+        query = 'SELECT i.quantity, i.price FROM item i WHERE i.id = %s;'
         data = (item_id, )
         cursor.execute(query, data)
         num = None
-        for (result, ) in cursor:
+        price = None
+        for (result, result2 ) in cursor:
             num = result
+            price = result2
+
+        query = 'UPDATE cart SET price = price + %s WHERE userId = %s;'
+        data = (price, user_id)
+        cursor.execute(query, data)
 
         if num > 0:
             # Decrease the number of availible items by 1.
