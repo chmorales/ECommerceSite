@@ -264,6 +264,17 @@ def search_results(string):
     cnx.close()
     return render_template('search_results.html', items=items, search_string=string)
 
+def get_item(item_id):
+    cnx = get_connector()
+    cursor = cnx.cursor()
+    query = 'SELECT i.name, i.description, i.price, i.quantity, s.email_address, c.name FROM item i, person s, category c WHERE i.id = %s AND i.category_id = c.id AND i.seller_id = s.id;'
+    data = (item_id, )
+    cursor.execute(query, data)
+    item = None
+    for (name, description, price, quantity, email_address, category_name) in cursor:
+        item = Item(item_id, name, description, price, email_address, quantity, category_name)
+    cnx.close()
+    return item
 
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
 def item_page(item_id):
@@ -323,31 +334,7 @@ def item_page(item_id):
     cursor.execute(query, data)
 
     # Walks through result, setting up object.
-    item = None
-    for (name, description, price, seller_id, quantity, category_id) in cursor:
-        # Gets another database connection.
-        cnx2 = get_connector()
-        cursor2 = cnx2.cursor()
-
-        # Gets the seller's email address.
-        query = 'SELECT s.email_address FROM person s WHERE s.id = %s;'
-        data = (seller_id, )
-        cursor2.execute(query, data)
-        email = None
-        for (user, ) in cursor2:
-            email = user
-
-        # Gets the actual name of the category.
-        query = 'SELECT c.name FROM category c WHERE c.id = %s;'
-        data = (category_id, )
-        cursor2.execute(query, data)
-        category = None
-        for (category_name, ) in cursor2:
-            category = category_name
-
-        # Creates the full Item object.
-        item = Item(item_id, name, description, price, email, quantity, category)
-        cnx2.close()
+    item = get_item(item_id)
 
     # Gets the relevant review information.
     query = ('SELECT r.rating, r.description, r.userId FROM review r WHERE r.itemId = %s;')
