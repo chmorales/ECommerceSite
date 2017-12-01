@@ -47,94 +47,131 @@ def user_id_decorator(func):
     def temp_with_user_id(*args, **kwargs):
         user_id = None
         logged_in = False
+        first_name = None
         if 'user_id' in session:
             user_id = session['user_id']
+            first_name = session['first_name']
             logged_in = True
 
         kwargs['user_id'] = user_id
         kwargs['logged_in'] = logged_in
+        kwargs['first_name'] = first_name
         return func(*args, **kwargs)
     return temp_with_user_id
 
 
+# Redefines render_template to inlude user_id and logged_in variables
 render_template = user_id_decorator(render_template)
 
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
-    error = None
-    create_error = None
+    if request.method == 'GET':
+        cnx = get_connector()
+        cursor = cnx.cursor()
+        query = ("SELECT * FROM featuredItem;")
+        cursor.execute(query)
+        items = []
+        # for (item_id, name, description, price, quantity) in cursor:
+        #     items.append(Item(item_id, name, description, price, None, quantity, None))
+        for (feat_id, item_id) in cursor:
+            query = 'SELECT i.name, i.description, i.price, i.seller_id FROM item i WHERE i.id = %s;'
+            data = (item_id)
+            cursor.execute(query, data)
+        return render_template('homepage.html', items=items)
     if request.method == 'POST':
-        if 'create_account' in request.form:
+        if 'search_input' in request.form:
+            search_string = request.form['search_input']
+            return redirect(url_for('search_results', string=search_string))
+
+
+@app.route("/login", methods=['GET', 'POST'])
+def login():
+    error=None
+    create_error=None
+    
+    if request.method == 'GET':
+        return render_template('login.html', error=error, create_error=create_error)
+    if request.method == 'POST':
+        if 'login' in request.form:
+            cnx = get_connector()
+            cursor = cnx.cursor()
+            email = request.form['login_email']
+            password = request.form['login_password']
+            
+            # Using prepared statements to prevent SQL injection
+            query = ("SELECT u.first_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
+            data = (email, password)
+            cursor.execute(query, data)
+            
+            for (first_name, user_id) in cursor:
+                session['user_id'] = user_id
+                session['first_name'] = first_name
+                return redirect(url_for('index'))
+            error = 'Invalid email and password combonation.'
+
+        elif 'create_account' in request.form:
             cnx = get_connector()
             cursor = cnx.cursor()
 
             # We need the email address, password, firstname, and lastname.
-            email_address = request.form['email']
-            password = request.form['password']
-            first_name = request.form['first_name']
-            last_name = request.form['last_name']
-
+            email_address = request.form['create_email']
+            password = request.form['create_password']
+            first_name = request.form['create_first_name']
+            last_name = request.form['create_last_name']
+            
             # Create a new cart just for our user. 
             query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
             cursor.execute(query)
-
+            
             # Commit the newly added cart to the database.
             cnx.commit()
-
+            
             # The one we just added will be the last one, AKA the max.
             query = 'SELECT MAX(id) FROM cart;'
             cursor.execute(query)
             cart_id = int(cursor.fetchall()[0][0])
-
+            
             try:
                 # Insert the new user into the database.
                 query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, %s);'
                 data = (first_name, last_name, password, email_address, cart_id)
                 cursor.execute(query, data)
-
+                
                 # Save the userId into the session.
                 query = 'SELECT MAX(id) FROM person;'
                 cursor.execute(query)
                 user_id = int(cursor.fetchall()[0][0])
                 session['user_id'] = user_id
-
+                
                 # Commit, close, and redirect.
                 cnx.commit()
                 cnx.close()
-
                 return redirect(url_for('hello'))
-
+            
             except pymysql.err.IntegrityError:
                 # Should only fire if the email address already exists in the database.
                 create_error = 'That email is already taken. Please try a new email.'
                 query = 'DELETE FROM cart WHERE id = %s;'
                 data = (cart_id, )
                 cursor.execute(query, data)
-
                 cnx.commit()
 
-        if 'log_in' in request.form:
-            cnx = get_connector()
-            cursor = cnx.cursor()
-            email_address = request.form['email2']
-            password = request.form['password2']
-
-            # Doing it this way prevents an injection attack (allegedly).
-            query = ("SELECT u.first_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
-            data = (email_address, password)
-            cursor.execute(query, data)
-            for (first_name, user_id) in cursor:
-                session['user_id'] = user_id
-                return redirect(url_for('hello'))
-            error = 'Invalid email/password combination.'
-
-        if 'search_input' in request.form:
+        elif 'search_input' in request.form:
             search_string = request.form['search_input']
             return redirect(url_for('search_results', string=search_string))
 
         cnx.close()
     return render_template('homepage.html', error=error, create_error=create_error)
+
+
+<<<<<<< HEAD
+@app.route('/logout')
+@requires_log_in
+def logout():
+    session.pop('user_id', None)
+    session.pop('first_name', None)
+    return redirect(url_for('index'))
 
 
 @app.route("/cart", methods=['GET'])

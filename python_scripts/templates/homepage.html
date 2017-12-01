@@ -2,78 +2,35 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
         <meta name="viewport" content="width=device-width, initial-scale=1">
     </head>
     <body>
         {% include 'navbar.html' %}
-        <div class="container" id="root">
-            <div class="jumbotron">
-                <h1>Generic Shopping Website</h1>
-                <p>Welcome to the most generic shopping experiece we could muster</p>
-            </div>
+        <!-- Begin here -->
+        <div class="jumbotron">
+            <h1>Generic Shopping Site</h1>
+            <h3>Welcome to the most generic shopping experience we could muster</h3>
+        </div>
+        <div class="container">
             <div class="row">
-            <!-- Create User Panel containing form to create a user -->
+                {% for item in items %}
                 <div class="col-md-6">
-                    <div class="panel panel-default" id="createUser_panel">
-                        <div class="panel-heading"><h3>Create an Account with Us!</h3></div>
-                        <div class="panel-body" id="create_account">
-                            <form action="" method="post">
-                                <div class="form-group">
-                                    <label for="createUser_firstName">First Name</label>
-                                    <input type="text" class="form-control" id="createUser_firstName" name="first_name" placeholder="First Name" value="{{ request.form.first_name }}">
-                                </div>
-                                <div class="form-group">
-                                    <label for="createUser_lastName">Last Name</label>
-                                    <input type="text" class="form-control" id="createUser_lastName" name="last_name" placeholder="Last Name" value="{{ request.form.last_name }}">
-                                </div>
-                                <div class="form-group">
-                                    <label for="createUser_email">Email address</label>
-                                    <input type="email" class="form-control" id="createUser_email" aria-describedby="emailHelp" name="email" placeholder="Enter email" value="{{ request.form.email }}">
-                                    <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
-                                </div>
-                                <div class="form-group">
-                                   <label for="createUser_password">Password</label>
-                                   <input type="password" class="form-control" id="createUser_password" placeholder="Password" name="password" value="{{ request.form.password }}">
-                                </div>
-                                <button type="submit" name="create_account" class="btn btn-primary">Create Account</button>
-                            </form>
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h3><a href="{{ url_for('item_page', item_id=item.item_id) }}">{{ item.name }}</a></h3></div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-6"><p>{{ item.description }}</p></div>
+                                <div class="col-md-3"><p>Price: {{ item.price }}</p></div>
+                                <div class="col-md-3"><p>Quanity: {{ item.quantity }}</p></div>
+                            </div>
                         </div>
-                        {% if create_error %}
-                        <div class="panel panel-danger">
-                            <div class="panel-heading">Error!</div>
-                            <div class="panel-body">Email is already in use!</div>
-                        </div>
-                        {% endif %}
                     </div>
                 </div>
-            <div class="col-md-6">
-                <div class="panel panel-default" id="login_panel">
-                  <div class="panel-heading"><h3>Login Here</h3></div>
-                  <div class="panel-body" id="log_in">
-                    <form action="" method="post">
-                      <div class="form-group">
-                          <label for="login_email">Email address</label>
-                          <input type="email" class="form-control" id="login_email" aria-describedby="emailHelp" name="email2" placeholder="Enter email" value="{{ request.form.email2 }}">
-                      </div>
-                      <div class="form-group">
-                        <label for="login_password">Password</label>
-                        <input type="password" class="form-control" id="login_password" placeholder="Password" name="password2" value="{{ request.form.password2 }}">
-                      </div>
-                      <button type="submit" name="log_in" class="btn btn-primary">Log in</button>
-                    </form>
-                  </div>
-                </div>
-                {% if error %}
-                <div class="panel panel-danger">
-                    <div class="panel-heading"><h3>Error!</h3></div>
-                    <div class="panel-body">Wrong Username or Password.</div>
-                </div>
-                {% endif %}
+                {% endfor %}
             </div>
-          </div>
         </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     </body>
 </html>
