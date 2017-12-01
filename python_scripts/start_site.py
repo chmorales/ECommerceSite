@@ -152,6 +152,10 @@ def login():
                 session['user_id'] = user_id
                 session['first_name'] = first_name
                 
+                query = 'UPDATE cart SET userId = %s WHERE id = %s;'
+                data = (user_id, cart_id)
+                cursor.execute(query, data)
+
                 # Commit, close, and redirect.
                 cnx.commit()
                 cnx.close()
@@ -378,6 +382,8 @@ def item_page(item_id):
         for (result, result2 ) in cursor:
             num = result
             price = result2
+
+        print(price)
 
         query = 'UPDATE cart SET price = price + %s WHERE userId = %s;'
         data = (price, user_id)
