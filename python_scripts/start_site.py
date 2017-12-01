@@ -235,6 +235,13 @@ def shopping_cart():
     for (cart_id, ) in cursor:
         curr_cart_id = cart_id
 
+    query = 'SELECT c.price FROM cart c WHERE c.id = %s;'
+    data = (cart_id, )
+    cursor.execute(query, data)
+    cart_price = None
+    for (result, ) in cursor:
+        cart_price = result
+
     # Gets a list of item ids in the cart.
     item_ids = []
     quantities = {}
@@ -255,7 +262,7 @@ def shopping_cart():
             # Construct and append the object.
             items.append(Item(item_id, name, description, price, email_address, quantities[item_id], None))
 
-    return render_template('cart.html', items=items)
+    return render_template('cart.html', items=items, cart_price=cart_price)
 
 
 @app.route("/cart/remove/<int:item_id>", methods=['POST'])
@@ -285,6 +292,17 @@ def remove_from_cart(item_id):
     quantity = None
     for (quant, ) in cursor:
         quantity = quant
+
+    query = 'SELECT i.price FROM item i WHERE i.id = %s;'
+    data = (item_id, )
+    cursor.execute(query, data)
+    item_price = None
+    for(result, ) in cursor:
+        item_price = result
+
+    query = 'UPDATE cart SET price = price - %s WHERE id = %s;'
+    data = (item_price, cart_id)
+    cursor.execute(query, data)
 
     # Sets the data for the last query
     data = (item_id, cart_id)
@@ -478,7 +496,7 @@ def sell_item():
             num = None
             for (result, ) in cursor:
                 num = result
-            if num >= 10:
+            if num >= 8:
                 query = "DELETE FROM featuredItem ORDER BY id ASC LIMIT 1;"
                 cursor.execute(query)
 
