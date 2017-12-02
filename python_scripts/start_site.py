@@ -24,12 +24,13 @@ class Item:
 
 
 class Review:
-    def __init__(self, rating, description, item_id, first_name, last_name):
+    def __init__(self, rating, description, item_id, first_name, last_name, item_name=None):
         self.rating = rating
         self.description = description
         self.item_id = item_id
         self.first_name = first_name
         self.last_name = last_name
+        self.item_name = item_name
 
 
 app = Flask(__name__)
@@ -102,6 +103,8 @@ def index():
         items.append(get_item(item_id))
     return render_template('homepage.html', items=items)
 
+class PasswordError(Exception):
+    pass
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -139,6 +142,9 @@ def login():
             last_name = request.form['create_last_name']
 
             try:
+                if len(password) <= 8:
+                    raise PasswordError
+                
                 # Create a new cart just for our user.
                 query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
                 cursor.execute(query)
@@ -166,6 +172,11 @@ def login():
                 create_error = 'That email is already taken. Please try a new email.'
                 cnx.rollback()
                 return render_template('login.html', error=error, create_error=create_error)
+            except PasswordError:
+                create_error = 'Passwords must be 8 characters long.'
+                cnx.rollback()
+                return render_template('login.html', error=error, create_error=create_error)
+
 
         elif 'search_input' in request.form:
             search_string = request.form['search_input']
@@ -205,8 +216,7 @@ def profile():
         data = (item_id, )
         item_cursor.execute(query, data)
         for (item_name) in item_cursor:
-            item = (item_id, item_name[0])
-            reviews.append(Review(rating, description, item, session['first_name'], session['last_name']))
+            reviews.append(Review(rating, description, item_id, session['first_name'], session['last_name'], item_name[0]))
 
     query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id ORDER BY p.purchaseDate DESC;'
     data = (user_id, )
