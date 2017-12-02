@@ -11,7 +11,7 @@ INSERT INTO cart (price) VALUES
 
 INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES
     ("Bob", "Admin", "pa", "B.Admin@gmail.com", 1),
-    ("Anthony", "Mulieri", "password", "amulieri@gmail.com", 2),
+    ("Robert", "Mulieri", "password", "amulieri@gmail.com", 2),
     ("Chris", "Morales", "password", "cmorales@gmail.com", 3),
     ("Daniel", "Shank", "password", "dshank@gmail.com", 4);
 
@@ -35,7 +35,8 @@ INSERT INTO item (name, description, price, seller_id, quantity, category_id) VA
     ("Toaster", "Toasty", 3.33, 2, 1, 1),
     ("Meth", "1 meth", 62.32, 2, 1, 4),
     ("Dog", "a heckin cute pupper!", 4.42, 2, 3, 2),
-    ("Sean", "Sean Milligan", .02, 2, 1, 3);
+    ("Sean", "Sean Milligan", .02, 2, 1, 3),
+    ("Generic Item", "A generic item for sale", 0.99, 4, 99, 4);
 
 /* We don't want to insert any purchases yet. */
 /* We don't want to insert any taken items yet. */
