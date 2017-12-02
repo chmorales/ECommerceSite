@@ -41,7 +41,7 @@ def requires_log_in(func):
     @wraps(func)
     def wrapped(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('index'))
+            return redirect(url_for('login'))
         return func(*args, **kwargs)
     return wrapped
 
@@ -343,9 +343,9 @@ def hello():
 @requires_log_in
 def sales():
     error = None
+    user_id = session['user_id']
     cnx = get_connector()
     cursor = cnx.cursor()
-    user_id = session['user_id']
 
     # Get the items that have been sold by the current user, and their
     query = ("SELECT i.id, i.name, i.price, t.quantity, p.purchaseDate "
@@ -625,10 +625,56 @@ def order_history():
     for (item_id, item_name, purchase_date, price, email_address, quantity) in cursor:
         purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
 
+    cnx.close()
+
     return render_template('order_history.html', error=error, purchases=purchases)
+
+
+@app.route('/inventory', methods=['GET', 'POST'])
+@requires_log_in
+def inventory():
+    error = None
+    user_id = session['user_id']
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # Get all the items that are sold by the current user
+    query = ('SELECT i.id, i.name, i.description, i.price, i.quantity, c.name '
+             'FROM item i, category c '
+             'WHERE i.seller_id = %s AND c.id = i.category_id')
+    data = (user_id, )
+    cursor.execute(query, data)
+
+    inventory = []
+    for (item_id, name, desc, price, quantity, category) in cursor:
+        inventory.append(Item(item_id, name, desc, price, None, quantity, category))
+
+    cnx.close()
+
+    return render_template('inventory.html', error=error, items=inventory)
+
+
+@app.route('/listing/<int:item_id>', methods=['GET', 'POST'])
+@requires_log_in
+def edit_listing(item_id):
+    error = None
+    user_id = session['user_id']
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    query = 'SELECT i.seller_id FROM item i where i.id = %s'
+    data = (item_id, )
+    cursor.execute(query, data)
+
+    seller_id = (cursor.fetchone())[0]
+
+    if seller_id != user_id:
+        return redirect(url_for('index'))
+
+    item = get_item(item_id)
+
+    return render_template('edit_listing.html', error=error, item=item)
 
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
-
-
