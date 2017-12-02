@@ -252,23 +252,12 @@ def shopping_cart():
         for (result, ) in cursor:
             cart_id = result
 
-        # Insert a new cart into the system.
-        query = 'INSERT INTO cart (price, userId) VALUES (%s, %s);'
-        data = (0.0, user_id)
-        cursor.execute(query, data)
-
-        # Get the newest added cart for the current user.
-        query = 'SELECT MAX(c.id) FROM cart c WHERE c.userId = %s;'
-        data = (user_id, )
-        cursor.execute(query, data)
-        cart_num = None
-        for (result, ) in cursor:
-            cart_num = result
+        query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
+        cursor.execute(query)
 
         # Update the user's cart to that one.
-        query = 'UPDATE person SET cartId = %s WHERE id = %s;'
-        data = (cart_num, user_id)
-        cursor.execute(query, data)
+        query = 'UPDATE person SET cartId = LAST_INSERT_ID();'
+        cursor.execute(query)
 
         # Put the old cart into a saved purchase slot.
         query = 'INSERT INTO purchase (buyerId, cartId, purchaseDate) VALUES (%s, %s, NOW());'
