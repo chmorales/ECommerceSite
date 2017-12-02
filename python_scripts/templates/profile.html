@@ -8,7 +8,9 @@
     <body>
         {% include 'navbar.html' %}
         <div class="container">
-            <div class="page-header"><h1>{{ first_name }} {{ last_name }}'s Profile</h1></div>
+            <div class="page-header">
+                <h1>{{ first_name }} {{ last_name }}'s Profile</h1>
+            </div>
             <div class="row">
                 <div class="col-md-6">
                     <div class="page-header"><h2>Your Orders</h2></div>
@@ -37,7 +39,7 @@
                     <div class="page-header"><h2>Your Reviews</h2></div>
                     {% for review in reviews %}
                     <div class="panel panel-default">
-                        <div class="panel-heading"><h3>You gave <a href="/item/{{ review.item_id[0] }}">{{ review.item_id[1] }}</a> a {{ review.rating }} out of 5.</h3></div>
+                        <div class="panel-heading"><h3>You gave <a href="/item/{{ review.item_id }}">{{ review.item_name }}</a> a {{ review.rating }} out of 5.</h3></div>
                         <div class="panel-body">{{ review.description }}</div>
                     </div>
                     {% endfor %}
