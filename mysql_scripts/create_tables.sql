@@ -26,7 +26,7 @@ CREATE TABLE person (
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     password VARCHAR(50) NOT NULL,
-    email_address TEXT UNIQUE NOT NULL,
+    email_address VARCHAR(100) UNIQUE NOT NULL,
     cartId INT NOT NULL,
     FOREIGN KEY (cartId) REFERENCES cart(id),
     CHECK (first_name <> ''),
