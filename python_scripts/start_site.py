@@ -284,7 +284,7 @@ def remove_from_cart(item_id):
     cursor = cnx.cursor()
 
     # Getting the users cart id
-    query = "SELECT p.cartId FROM person p WHERE p.id = %s;"
+    query = "SELECT p.cartId FROM person p WHERE p.id = %s FOR UPDATE;"
     data = (user_id, )
     cursor.execute(query, data)
     cart_id = None
@@ -296,36 +296,24 @@ def remove_from_cart(item_id):
     data = (item_id, )
     cursor.execute(query, data)
 
-    # Get the quantity of the item that's in the cart
-    query = "SELECT t.quantity FROM takenItem t WHERE t.itemId = %s AND t.cartId = %s;"
+    # Reduce the total price of the cart
+    query = ('UPDATE cart c, item i '
+             'SET c.price = c.price - i.price '
+             'WHERE i.id = %s AND c.id = %s;')
     data = (item_id, cart_id)
     cursor.execute(query, data)
-    quantity = None
-    for (quant, ) in cursor:
-        quantity = quant
+    # Note that we use the same data for the remaining queries
 
-    query = 'SELECT i.price FROM item i WHERE i.id = %s;'
-    data = (item_id, )
-    cursor.execute(query, data)
-    item_price = None
-    for(result, ) in cursor:
-        item_price = result
-
-    query = 'UPDATE cart SET price = price - %s WHERE id = %s;'
-    data = (item_price, cart_id)
+    # Reduce the quantity in the cart by one
+    query = ("UPDATE takenItem t "
+             "SET t.quantity = t.quantity - 1 "
+             "WHERE itemId = %s AND cartId = %s;")
     cursor.execute(query, data)
 
-    # Sets the data for the last query
-    data = (item_id, cart_id)
-
-    if quantity == 1:
-        # If there was only one item left, remove it from the table
-        query = "DELETE FROM takenItem WHERE itemId = %s AND cartId = %s;"
-        cursor.execute(query, data)
-    else:
-        # Otherwise remove one of the item from the cart
-        query = "UPDATE takenItem SET quantity = quantity - 1 WHERE itemId = %s AND cartId = %s;"
-        cursor.execute(query, data)
+    # If there are no more of the item in the cart, remove it from the cart
+    query = ("DELETE FROM takenItem "
+             "WHERE itemId = %s AND cartId = %s AND quantity = 0;")
+    cursor.execute(query, data)
 
     cnx.commit()
     cnx.close()
