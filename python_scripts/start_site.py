@@ -24,12 +24,13 @@ class Item:
 
 
 class Review:
-    def __init__(self, rating, description, item_id, first_name, last_name):
+    def __init__(self, rating, description, item_id, first_name, last_name, item_name=None):
         self.rating = rating
         self.description = description
         self.item_id = item_id
         self.first_name = first_name
         self.last_name = last_name
+        self.item_name = item_name
 
 
 app = Flask(__name__)
@@ -205,8 +206,7 @@ def profile():
         data = (item_id, )
         item_cursor.execute(query, data)
         for (item_name) in item_cursor:
-            item = (item_id, item_name[0])
-            reviews.append(Review(rating, description, item, session['first_name'], session['last_name']))
+            reviews.append(Review(rating, description, item_id, session['first_name'], session['last_name'], item_name[0]))
 
     query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id ORDER BY p.purchaseDate DESC;'
     data = (user_id, )
