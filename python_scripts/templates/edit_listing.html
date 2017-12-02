@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+  <head>
+    <title> Edit Listing </title>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    {% include 'navbar.html' %}
+        <div class="container" id="root">
+          <div class="page-header" style="text-align: center;">
+            <h2> Input desired changes to the listing</h2>
+          </div>
+          <form method=post enctype=multipart/form-data>
+            <div class="row">
+              <div class="col-md-6"> Name: <input type="text" name="name" value="{{ item.name }}"> </div>
+              <div class="col-md-6"> Description: <input type="text" name="description" value="{{ item.description }}"> </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6"> Price: <input type="text" name="price" value="{{ item.price }}"> </div>
+              <div class="col-md-6"> Quantity: <input type="text" name="quantity" value="{{ item.quantity }}"> </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6">
+                Category: <select name="category" value="{{ item.category }}">
+                  {% for category in categories %}
+                    {% if category != item.category %}
+                        <option value="{{ category }}"> {{ category }} </option>
+                    {% else %}
+                        <option value="{{ category }}" selected> {{ category }} </option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-6">
+                Associated Image: <input type=file name=file>
+              </div>
+            </div>
+            <input class="btn btn-default" type="submit" value="Save Changes">
+          </form>
+      </div>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+      </div>
+  </body>
+</html>

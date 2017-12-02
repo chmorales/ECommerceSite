@@ -7,6 +7,7 @@ import os
 UPLOAD_FOLDER = "static"
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
+
 class Item:
     def __init__(self, item_id, name, description, price, seller, quantity,
                  category):
@@ -35,12 +36,13 @@ app = Flask(__name__)
 app.secret_key = '$ombraM@inBTW'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+
 def requires_log_in(func):
     """ Decorates a function, requiring that the user be logged in """
     @wraps(func)
     def wrapped(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('index'))
+            return redirect(url_for('login'))
         return func(*args, **kwargs)
     return wrapped
 
@@ -66,8 +68,10 @@ def user_id_decorator(func):
         return func(*args, **kwargs)
     return temp_with_user_id
 
+
 # Redefines render_template to inlude user_id and logged_in variables
 render_template = user_id_decorator(render_template)
+
 
 def get_item(item_id):
     cnx = get_connector()
@@ -81,8 +85,10 @@ def get_item(item_id):
     cnx.close()
     return item
 
+
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
@@ -101,14 +107,14 @@ def index():
 def login():
     error=None
     create_error=None
-    
+
     if request.method == 'POST':
         if 'login' in request.form:
             cnx = get_connector()
             cursor = cnx.cursor()
             email = request.form['login_email']
             password = request.form['login_password']
-            
+
             # Using prepared statements to prevent SQL injection
             query = ("SELECT u.first_name, u.last_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
             data = (email, password)
@@ -131,44 +137,34 @@ def login():
             password = request.form['create_password']
             first_name = request.form['create_first_name']
             last_name = request.form['create_last_name']
-            
-            # Create a new cart just for our user. 
-            query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
-            cursor.execute(query)
-            
-            # Commit the newly added cart to the database.
-            cnx.commit()
-            
-            # The one we just added will be the last one, AKA the max.
-            query = 'SELECT MAX(id) FROM cart;'
-            cursor.execute(query)
-            cart_id = int(cursor.fetchall()[0][0])
-            
+
             try:
+                # Create a new cart just for our user.
+                query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
+                cursor.execute(query)
+
                 # Insert the new user into the database.
-                query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, %s);'
-                data = (first_name, last_name, password, email_address, cart_id)
+                query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, LAST_INSERT_ID());'
+                data = (first_name, last_name, password, email_address)
                 cursor.execute(query, data)
-                
+
                 # Save the userId into the session.
                 query = 'SELECT MAX(id) FROM person;'
                 cursor.execute(query)
-                user_id = int(cursor.fetchall()[0][0])
+                user_id = int(cursor.fetchone()[0])
                 session['user_id'] = user_id
                 session['first_name'] = first_name
-                
+                session['last_name'] = last_name
+
                 # Commit, close, and redirect.
                 cnx.commit()
                 cnx.close()
                 return redirect(url_for('hello'))
-            
+
             except pymysql.err.IntegrityError:
                 # Should only fire if the email address already exists in the database.
                 create_error = 'That email is already taken. Please try a new email.'
-                query = 'DELETE FROM cart WHERE id = %s;'
-                data = (cart_id, )
-                cursor.execute(query, data)
-                cnx.commit()
+                cnx.rollback()
                 return render_template('login.html', error=error, create_error=create_error)
 
         elif 'search_input' in request.form:
@@ -243,7 +239,7 @@ def shopping_cart():
         cart_id = None
         for (result, ) in cursor:
             cart_id = result
-        
+
         # Insert a new cart into the system.
         query = 'INSERT INTO cart (price, userId) VALUES (%s, %s);'
         data = (0.0, user_id)
@@ -315,7 +311,7 @@ def remove_from_cart(item_id):
     cursor = cnx.cursor()
 
     # Getting the users cart id
-    query = "SELECT p.cartId FROM person p WHERE p.id = %s;"
+    query = "SELECT p.cartId FROM person p WHERE p.id = %s FOR UPDATE;"
     data = (user_id, )
     cursor.execute(query, data)
     cart_id = None
@@ -327,36 +323,24 @@ def remove_from_cart(item_id):
     data = (item_id, )
     cursor.execute(query, data)
 
-    # Get the quantity of the item that's in the cart
-    query = "SELECT t.quantity FROM takenItem t WHERE t.itemId = %s AND t.cartId = %s;"
+    # Reduce the total price of the cart
+    query = ('UPDATE cart c, item i '
+             'SET c.price = c.price - i.price '
+             'WHERE i.id = %s AND c.id = %s;')
     data = (item_id, cart_id)
     cursor.execute(query, data)
-    quantity = None
-    for (quant, ) in cursor:
-        quantity = quant
+    # Note that we use the same data for the remaining queries
 
-    query = 'SELECT i.price FROM item i WHERE i.id = %s;'
-    data = (item_id, )
-    cursor.execute(query, data)
-    item_price = None
-    for(result, ) in cursor:
-        item_price = result
-
-    query = 'UPDATE cart SET price = price - %s WHERE id = %s;'
-    data = (item_price, cart_id)
+    # Reduce the quantity in the cart by one
+    query = ("UPDATE takenItem t "
+             "SET t.quantity = t.quantity - 1 "
+             "WHERE itemId = %s AND cartId = %s;")
     cursor.execute(query, data)
 
-    # Sets the data for the last query
-    data = (item_id, cart_id)
-
-    if quantity == 1:
-        # If there was only one item left, remove it from the table
-        query = "DELETE FROM takenItem WHERE itemId = %s AND cartId = %s;"
-        cursor.execute(query, data)
-    else:
-        # Otherwise remove one of the item from the cart
-        query = "UPDATE takenItem SET quantity = quantity - 1 WHERE itemId = %s AND cartId = %s;"
-        cursor.execute(query, data)
+    # If there are no more of the item in the cart, remove it from the cart
+    query = ("DELETE FROM takenItem "
+             "WHERE itemId = %s AND cartId = %s AND quantity = 0;")
+    cursor.execute(query, data)
 
     cnx.commit()
     cnx.close()
@@ -370,11 +354,40 @@ def hello():
     return render_template('test.html')
 
 
+@app.route('/sale_history', methods=['GET', 'POST'])
+@requires_log_in
+def sales():
+    error = None
+    user_id = session['user_id']
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # Get the items that have been sold by the current user, and their
+    query = ("SELECT i.id, i.name, i.price, t.quantity, p.purchaseDate "
+             "FROM item i, takenItem t, cart c, purchase p "
+             "WHERE i.id = t.itemId AND i.seller_id = %s AND c.id = p.cartId;")
+    data = (user_id, )
+    cursor.execute(query, data)
+
+    purchases = []
+
+    # Make a list of all the purchases we will be displaying.
+    for (item_id, item_name, price, quantity, purchase_date) in cursor:
+        purchases.append(Purchase(item_id=item_id, item=item_name,
+                                  date=purchase_date, price=price,
+                                  seller=None, quantity=quantity))
+
+    cnx.close()
+
+    return render_template('sale_history.html', error=error, purchases=purchases)
+
+
 @app.route('/search', methods=['POST'])
 def search():
     if request.method == 'POST':
         search_string = request.form['search_input']
         return redirect(url_for('search_results', string=search_string))
+
 
 @app.route('/search/<string:string>', methods=['GET', 'POST'])
 def search_results(string):
@@ -387,7 +400,9 @@ def search_results(string):
     cursor = cnx.cursor()
 
     # Search for any items with a name containing the search string.
-    query = 'SELECT i.id, i.name, i.description, i.price, i.quantity FROM item i WHERE i.name LIKE %s;'
+    query = ('SELECT i.id, i.name, i.description, i.price, i.quantity '
+             'FROM item i '
+             'WHERE i.name LIKE %s AND i.listed;')
     data = ('%' + string + '%', )
     cursor.execute(query, data)
 
@@ -398,6 +413,7 @@ def search_results(string):
 
     cnx.close()
     return render_template('search_results.html', items=items, search_string=string)
+
 
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
 def item_page(item_id):
@@ -439,15 +455,15 @@ def item_page(item_id):
                 cart_id = cart
 
             exists = False
-            query = 'SELECT i.itemId FROM takenItem i WHERE i.itemId = %s;'
-            data = (item_id, )
+            query = 'SELECT i.itemId FROM takenItem i, person p WHERE i.itemId = %s AND i.cartId = p.cartId AND p.id = %s;'
+            data = (item_id, user_id)
             cursor.execute(query, data)
             for item in cursor:
                 exists = True
 
             if exists:
-                query = 'UPDATE takenItem SET quantity = quantity + 1 WHERE itemId = %s;'
-                data = (item_id, )
+                query = 'UPDATE takenItem t, person p SET t.quantity = t.quantity + 1 WHERE t.itemId = %s AND t.cartId = p.cartId AND p.id = %s;'
+                data = (item_id, user_id)
                 cursor.execute(query, data)
 
             if not exists:
@@ -561,6 +577,7 @@ def sell_item():
 
     return render_template('sell_item.html', error=error, categories=categories)
 
+
 @app.route('/review/<int:item_id>', methods=['GET', 'POST'])
 @requires_log_in
 def review(item_id):
@@ -570,7 +587,7 @@ def review(item_id):
     cursor = cnx.cursor()
 
     if request.method == 'POST':
-    
+
         try:
             rating = int(request.form['rating'])
             if rating > 5 or rating < 1:
@@ -589,10 +606,11 @@ def review(item_id):
 
         except ValueError:
             error = 'Please enter a valid number for the rating, between 1 and 5 inclusive.'
-        
+
     cnx.close()
 
     return render_template('give_review.html', error=error)
+
 
 class Purchase:
         def __init__(self, item_id, item, date, price, seller, quantity):
@@ -614,7 +632,10 @@ def order_history():
     cnx = get_connector()
     cursor = cnx.cursor()
 
-    query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id ORDER BY p.purchaseDate DESC;'
+    query = ('SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity '
+             'FROM item i, takenItem t, purchase p, person u '
+             'WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id '
+             'ORDER BY p.purchaseDate DESC;')
     data = (user_id, )
     cursor.execute(query, data)
 
@@ -622,9 +643,136 @@ def order_history():
     for (item_id, item_name, purchase_date, price, email_address, quantity) in cursor:
         purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
 
+    cnx.close()
+
     return render_template('order_history.html', error=error, purchases=purchases)
+
+
+@app.route('/inventory', methods=['GET', 'POST'])
+@requires_log_in
+def inventory():
+    error = None
+    user_id = session['user_id']
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # Get all the items that are sold by the current user
+    query = ('SELECT i.id, i.name, i.description, i.price, i.quantity, c.name '
+             'FROM item i, category c '
+             'WHERE i.seller_id = %s AND c.id = i.category_id AND i.listed;')
+    data = (user_id, )
+    cursor.execute(query, data)
+
+    inventory = []
+    for (item_id, name, desc, price, quantity, category) in cursor:
+        inventory.append(Item(item_id, name, desc, price, None, quantity, category))
+
+    cnx.close()
+
+    return render_template('inventory.html', error=error, items=inventory)
+
+
+@app.route('/listing/<int:item_id>', methods=['GET'])
+@requires_log_in
+def listing(item_id):
+    error = None
+    user_id = session['user_id']
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    query = 'SELECT i.seller_id, i.listed FROM item i where i.id = %s'
+    data = (item_id, )
+    cursor.execute(query, data)
+
+    (seller_id, listed) = cursor.fetchone()
+
+    # If the user isn't the items seller, take us away
+    if seller_id != user_id or not listed:
+        return redirect(url_for('inventory'))
+
+    item = get_item(item_id)
+
+    query = 'SELECT c.name FROM category c;'
+    cursor.execute(query)
+
+    categories = []
+    for (category, ) in cursor:
+        categories.append(category)
+
+    return render_template('listing.html', error=error, item=item, categories=categories)
+
+
+@app.route('/listing/edit/<int:item_id>', methods=['POST'])
+@requires_log_in
+def edit_listing(item_id):
+    # Get the new values
+    name = request.form['name']
+    description = request.form['description']
+    price = float(request.form['price'])
+    quantity = int(request.form['quantity'])
+    category_name = request.form['category']
+
+    old_item = get_item(item_id)
+
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # If only the quantity has changed, we update the quantity of the item
+    if (old_item.name == name and old_item.description == description and
+            old_item.price == price and
+            old_item.category == category_name):
+        query = 'UPDATE item i SET i.quantity = %s WHERE i.id = %s'
+        data = (quantity, item_id)
+
+        cursor.execute(query, data)
+    # Otherwise we make a new item and update the whole database
+    else:
+        # Get the category id of selected category
+        query = 'SELECT c.id FROM category c WHERE c.name = %s'
+        data = (category_name, )
+        cursor.execute(query, data)
+        category_id = None
+        for (category_id_result, ) in cursor:
+            category_id = category_id_result
+
+        # Create the new item to replace the old item
+        query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s);"
+        data = (name, description, price, session['user_id'], quantity, category_id)
+        cursor.execute(query, data)
+
+        # Change the old item to be unlisted
+        query = "UPDATE item i SET i.listed = FALSE WHERE i.id = %s;"
+        data = (old_item.item_id, )
+        cursor.execute(query, data)
+
+        # Update the reviews to point the new listing
+        query = "UPDATE review r SET r.itemId = LAST_INSERT_ID() WHERE r.itemId = %s;"
+        cursor.execute(query, data)
+
+        # If the item is on the featured items table, update it to point to the new listing
+        query = "UPDATE featuredItem f SET f.itemId = LAST_INSERT_ID() WHERE f.itemId = %s;"
+        cursor.execute(query, data)
+
+        # Updates taken items in carts that are still in use to point to the new listing.
+        query = ("UPDATE takenItem t, cart c, person p "
+                 "SET t.itemId = LAST_INSERT_ID() "
+                 "WHERE t.itemId = %s AND t.cartId = c.id AND c.id = p.cartId;"
+                 )
+        cursor.execute(query, data)
+
+        # Update cart prices to reflect the new price of the item
+        query = ("UPDATE cart c, takenItem t, person p "
+                 "SET c.price = c.price + (t.quantity * (%s - %s)) "
+                 "WHERE t.itemId = LAST_INSERT_ID() AND t.cartId = c.id AND c.id = p.cartId;"
+                 )
+        data = (price, old_item.price)
+        cursor.execute(query, data)
+
+    cnx.commit()
+    cnx.close()
+
+    return redirect(url_for('inventory'))
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
-
-
