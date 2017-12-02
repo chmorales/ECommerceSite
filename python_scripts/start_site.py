@@ -133,34 +133,22 @@ def login():
             first_name = request.form['create_first_name']
             last_name = request.form['create_last_name']
 
-            # Create a new cart just for our user.
-            query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
-            cursor.execute(query)
-
-            # Commit the newly added cart to the database.
-            cnx.commit()
-
-            # The one we just added will be the last one, AKA the max.
-            query = 'SELECT MAX(id) FROM cart;'
-            cursor.execute(query)
-            cart_id = int(cursor.fetchall()[0][0])
-
             try:
+                # Create a new cart just for our user.
+                query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
+                cursor.execute(query)
+
                 # Insert the new user into the database.
-                query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, %s);'
-                data = (first_name, last_name, password, email_address, cart_id)
+                query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, LAST_INSERT_ID());'
+                data = (first_name, last_name, password, email_address)
                 cursor.execute(query, data)
 
                 # Save the userId into the session.
                 query = 'SELECT MAX(id) FROM person;'
                 cursor.execute(query)
-                user_id = int(cursor.fetchall()[0][0])
+                user_id = int(cursor.fetchone()[0])
                 session['user_id'] = user_id
                 session['first_name'] = first_name
-
-                query = 'UPDATE cart SET userId = %s WHERE id = %s;'
-                data = (user_id, cart_id)
-                cursor.execute(query, data)
 
                 # Commit, close, and redirect.
                 cnx.commit()
@@ -170,10 +158,7 @@ def login():
             except pymysql.err.IntegrityError:
                 # Should only fire if the email address already exists in the database.
                 create_error = 'That email is already taken. Please try a new email.'
-                query = 'DELETE FROM cart WHERE id = %s;'
-                data = (cart_id, )
-                cursor.execute(query, data)
-                cnx.commit()
+                cnx.rollback()
                 return render_template('login.html', error=error, create_error=create_error)
 
         elif 'search_input' in request.form:

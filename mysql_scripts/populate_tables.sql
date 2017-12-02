@@ -15,11 +15,6 @@ INSERT INTO person (first_name, last_name, password, email_address, cartId) VALU
     ("Chris", "Morales", "password", "cmorales@gmail.com", 3),
     ("Daniel", "Shank", "password", "dshank@gmail.com", 4);
 
-UPDATE cart SET userId = 1 WHERE id = 1;
-UPDATE cart SET userId = 2 WHERE id = 2;
-UPDATE cart SET userId = 3 WHERE id = 3;
-UPDATE cart SET userId = 4 WHERE id = 4;
-
 INSERT INTO administrator (userId) VALUES
     (1);
 

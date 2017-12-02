@@ -34,9 +34,6 @@ CREATE TABLE person (
     CHECK (password <> '' and CHAR_LENGTH(password) > 5)
 );
 
-ALTER TABLE cart ADD COLUMN userId INT;
-ALTER TABLE cart ADD CONSTRAINT fk_userId FOREIGN KEY (userId) REFERENCES person(id);
-
 CREATE TABLE administrator (
     userId INT NOT NULL,
     FOREIGN KEY (userId) REFERENCES person(id)
