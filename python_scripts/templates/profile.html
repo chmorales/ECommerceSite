@@ -37,7 +37,7 @@
                     <div class="page-header"><h2>Your Reviews</h2></div>
                     {% for review in reviews %}
                     <div class="panel panel-default">
-                        <div class="panel-heading">You gave {{ review.item_id }} a {{ review.rating }} out of 5.</div>
+                        <div class="panel-heading"><h3>You gave <a href="/item/{{ review.item_id[0] }}">{{ review.item_id[1] }}</a> a {{ review.rating }} out of 5.</h3></div>
                         <div class="panel-body">{{ review.description }}</div>
                     </div>
                     {% endfor %}

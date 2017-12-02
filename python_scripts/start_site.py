@@ -209,7 +209,8 @@ def profile():
         data = (item_id, )
         item_cursor.execute(query, data)
         for (item_name) in item_cursor:
-            reviews.append(Review(rating, description, item_name[0], session['first_name'], session['last_name']))
+            item = (item_id, item_name[0])
+            reviews.append(Review(rating, description, item, session['first_name'], session['last_name']))
 
     query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id ORDER BY p.purchaseDate DESC;'
     data = (user_id, )
