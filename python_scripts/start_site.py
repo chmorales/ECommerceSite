@@ -668,12 +668,22 @@ def edit_listing(item_id):
 
     seller_id = (cursor.fetchone())[0]
 
+    # If the user isn't the items seller, take us away
     if seller_id != user_id:
         return redirect(url_for('index'))
 
     item = get_item(item_id)
 
-    return render_template('edit_listing.html', error=error, item=item)
+    query = 'SELECT c.name FROM category c;'
+    cursor.execute(query)
+
+    categories = []
+    for (category, ) in cursor:
+        categories.append(category)
+
+    #TODO FINISH THE EDIT LISTING LOGIC! Preferably that will go in another function if possible
+
+    return render_template('edit_listing.html', error=error, item=item, categories=categories)
 
 
 if __name__ == "__main__":

@@ -24,9 +24,13 @@
             </div>
             <div class="row">
               <div class="col-md-6">
-                Category: <select name="category" value="{{ rtem.category }}">
+                Category: <select name="category" value="{{ item.category }}">
                   {% for category in categories %}
-                    <option value="{{ category }}"> {{ category }} </option>
+                    {% if category != item.category %}
+                        <option value="{{ category }}"> {{ category }} </option>
+                    {% else %}
+                        <option value="{{ category }}" selected> {{ category }} </option>
+                    {% endif %}
                   {% endfor %}
                 </select>
               </div>
