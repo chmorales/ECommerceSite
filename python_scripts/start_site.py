@@ -142,9 +142,9 @@ def login():
             last_name = request.form['create_last_name']
 
             try:
-                if len(password) <= 8:
+                if len(password) < 8:
                     raise PasswordError
-                
+
                 # Create a new cart just for our user.
                 query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
                 cursor.execute(query)
@@ -173,7 +173,7 @@ def login():
                 cnx.rollback()
                 return render_template('login.html', error=error, create_error=create_error)
             except PasswordError:
-                create_error = 'Passwords must be 8 characters long.'
+                create_error = 'Passwords must be 8 characters long or greater.'
                 cnx.rollback()
                 return render_template('login.html', error=error, create_error=create_error)
 
@@ -218,7 +218,10 @@ def profile():
         for (item_name) in item_cursor:
             reviews.append(Review(rating, description, item_id, session['first_name'], session['last_name'], item_name[0]))
 
-    query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id ORDER BY p.purchaseDate DESC;'
+    query = ('SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity '
+             'FROM item i, takenItem t, purchase p, person u '
+             'WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id '
+             'ORDER BY p.purchaseDate DESC;')
     data = (user_id, )
     cursor.execute(query, data)
 
@@ -715,6 +718,21 @@ def listing(item_id):
 @app.route('/listing/edit/<int:item_id>', methods=['POST'])
 @requires_log_in
 def edit_listing(item_id):
+    error = None
+    user_id = session['user_id']
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    query = 'SELECT i.seller_id, i.listed FROM item i where i.id = %s'
+    data = (item_id, )
+    cursor.execute(query, data)
+
+    (seller_id, listed) = cursor.fetchone()
+
+    # If the user isn't the items seller, take us away
+    if seller_id != user_id or not listed:
+        return redirect(url_for('inventory'), error=error)
+
     # Get the new values
     name = request.form['name']
     description = request.form['description']
@@ -723,9 +741,6 @@ def edit_listing(item_id):
     category_name = request.form['category']
 
     old_item = get_item(item_id)
-
-    cnx = get_connector()
-    cursor = cnx.cursor()
 
     # If only the quantity has changed, we update the quantity of the item
     if (old_item.name == name and old_item.description == description and
@@ -781,7 +796,7 @@ def edit_listing(item_id):
     cnx.commit()
     cnx.close()
 
-    return redirect(url_for('inventory'))
+    return redirect(url_for('inventory'), error=error)
 
 
 @app.route('/listing/remove/<int:item_id>', methods=['POST'])
@@ -800,7 +815,11 @@ def remove_listing(item_id):
 
     # If the user isn't the items seller, take us away
     if seller_id != user_id or not listed:
-        return redirect(url_for('inventory'))
+        return redirect(url_for('inventory'), error=error)
+
+
+
+    return redirect(url_for('inventory'), error=error)
 
 
 if __name__ == "__main__":
