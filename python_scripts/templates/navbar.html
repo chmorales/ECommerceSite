@@ -14,7 +14,7 @@
             <li class="active"><a href="/">Home</a></li>
             <li><a href="/profile">
                 {% if logged_in %}
-                {{ first_name }}
+                {{ first_name }} {{ last_name }}
                 {% else %}
                 Profile
                 {% endif %}

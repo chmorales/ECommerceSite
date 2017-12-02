@@ -23,9 +23,10 @@ class Item:
 
 
 class Review:
-    def __init__(self, rating, description, first_name, last_name):
+    def __init__(self, rating, description, item_id, first_name, last_name):
         self.rating = rating
         self.description = description
+        self.item_id = item_id
         self.first_name = first_name
         self.last_name = last_name
 
@@ -51,14 +52,17 @@ def user_id_decorator(func):
         user_id = None
         logged_in = False
         first_name = None
+        last_name = None
         if 'user_id' in session:
             user_id = session['user_id']
             first_name = session['first_name']
+            last_name = session['last_name']
             logged_in = True
 
         kwargs['user_id'] = user_id
         kwargs['logged_in'] = logged_in
         kwargs['first_name'] = first_name
+        kwargs['last_name'] = last_name
         return func(*args, **kwargs)
     return temp_with_user_id
 
@@ -106,13 +110,14 @@ def login():
             password = request.form['login_password']
             
             # Using prepared statements to prevent SQL injection
-            query = ("SELECT u.first_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
+            query = ("SELECT u.first_name, u.last_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
             data = (email, password)
             cursor.execute(query, data)
             
-            for (first_name, user_id) in cursor:
+            for (first_name, last_name, user_id) in cursor:
                 session['user_id'] = user_id
                 session['first_name'] = first_name
+                session['last_name'] = last_name
                 return redirect(url_for('index'))
             error = 'Invalid email and password combonation.'
             return render_template('login.html', error=error, create_error=create_error)
@@ -179,7 +184,42 @@ def login():
 def logout():
     session.pop('user_id', None)
     session.pop('first_name', None)
+    session.pop('last_name', None)
+    session['logged_in'] = False
     return redirect(url_for('index'))
+
+
+# You should be able to see order history, your reviews, and items you're selling
+@app.route('/profile')
+@requires_log_in
+def profile():
+
+    # Get reviews that the user had posted
+    cnx = get_connector()
+    cursor = cnx.cursor()
+    query = ('SELECT r.rating, r.description, r.itemId, r.userId FROM review r WHERE r.userId = %s;')
+    data = (session['user_id'], )
+    cursor.execute(query, data)
+
+    # Geting building list of reviews and list of item names, hopefully in same order
+    reviews = []
+    for (rating, description, item_id, user_id) in cursor:
+        item_cursor = cnx.cursor()
+        query = ('SELECT i.name FROM item i WHERE i.id = %s;')
+        data = (item_id, )
+        item_cursor.execute(query, data)
+        for (item_name) in item_cursor:
+            reviews.append(Review(rating, description, item_name[0], session['first_name'], session['last_name']))
+
+    query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id ORDER BY p.purchaseDate DESC;'
+    data = (user_id, )
+    cursor.execute(query, data)
+
+    purchases = []
+    for (item_id, item_name, purchase_date, price, email_address, quantity) in cursor:
+        purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
+
+    return render_template('profile.html', reviews=reviews, purchases=purchases)
 
 
 @app.route("/cart", methods=['POST', 'GET'])
@@ -443,7 +483,7 @@ def item_page(item_id):
             ln = last_name
 
         # Appends the Review item to the list of reviews.
-        reviews.append(Review(rating, description, fn, ln))
+        reviews.append(Review(rating, description, item_id, fn, ln))
         cnx2.close()
     cnx.close()
 
