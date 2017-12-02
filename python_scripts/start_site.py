@@ -102,6 +102,8 @@ def index():
         items.append(get_item(item_id))
     return render_template('homepage.html', items=items)
 
+class PasswordError(Exception):
+    pass
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -139,6 +141,9 @@ def login():
             last_name = request.form['create_last_name']
 
             try:
+                if len(password) <= 8:
+                    raise PasswordError
+                
                 # Create a new cart just for our user.
                 query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
                 cursor.execute(query)
@@ -166,6 +171,11 @@ def login():
                 create_error = 'That email is already taken. Please try a new email.'
                 cnx.rollback()
                 return render_template('login.html', error=error, create_error=create_error)
+            except PasswordError:
+                create_error = 'Passwords must be 8 characters long.'
+                cnx.rollback()
+                return render_template('login.html', error=error, create_error=create_error)
+
 
         elif 'search_input' in request.form:
             search_string = request.form['search_input']
