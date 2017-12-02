@@ -103,6 +103,8 @@ def index():
         items.append(get_item(item_id))
     return render_template('homepage.html', items=items)
 
+class PasswordError(Exception):
+    pass
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -120,7 +122,7 @@ def login():
             query = ("SELECT u.first_name, u.last_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
             data = (email, password)
             cursor.execute(query, data)
-            
+
             for (first_name, last_name, user_id) in cursor:
                 session['user_id'] = user_id
                 session['first_name'] = first_name
@@ -140,6 +142,9 @@ def login():
             last_name = request.form['create_last_name']
 
             try:
+                if len(password) <= 8:
+                    raise PasswordError
+                
                 # Create a new cart just for our user.
                 query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
                 cursor.execute(query)
@@ -167,6 +172,11 @@ def login():
                 create_error = 'That email is already taken. Please try a new email.'
                 cnx.rollback()
                 return render_template('login.html', error=error, create_error=create_error)
+            except PasswordError:
+                create_error = 'Passwords must be 8 characters long.'
+                cnx.rollback()
+                return render_template('login.html', error=error, create_error=create_error)
+
 
         elif 'search_input' in request.form:
             search_string = request.form['search_input']
@@ -436,10 +446,6 @@ def item_page(item_id):
             num = result
             price = result2
 
-        query = 'UPDATE cart SET price = price + %s WHERE userId = %s;'
-        data = (price, user_id)
-        cursor.execute(query, data)
-
         if num > 0:
             # Decrease the number of availible items by 1.
             query = 'UPDATE item SET quantity = quantity - 1 WHERE id = %s;'
@@ -453,6 +459,10 @@ def item_page(item_id):
             cart_id = None
             for (cart, ) in cursor:
                 cart_id = cart
+
+            query = 'UPDATE cart SET price = price + %s WHERE id = %s;'
+            data = (price, cart_id)
+            cursor.execute(query, data)
 
             exists = False
             query = 'SELECT i.itemId FROM takenItem i, person p WHERE i.itemId = %s AND i.cartId = p.cartId AND p.id = %s;'
