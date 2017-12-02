@@ -447,8 +447,8 @@ def item_page(item_id):
                 exists = True
 
             if exists:
-                query = 'UPDATE takenItem SET quantity = quantity + 1 WHERE itemId = %s;'
-                data = (item_id, )
+                query = 'UPDATE takenItem t, person p SET t.quantity = t.quantity + 1 WHERE t.itemId = %s AND t.cartId = p.cartId AND p.id = %s;'
+                data = (item_id, user_id)
                 cursor.execute(query, data)
 
             if not exists:
