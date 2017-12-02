@@ -774,5 +774,24 @@ def edit_listing(item_id):
     return redirect(url_for('inventory'))
 
 
+@app.route('/listing/remove/<int:item_id>', methods=['POST'])
+@requires_log_in
+def remove_listing(item_id):
+    error = None
+    user_id = session['user_id']
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    query = 'SELECT i.seller_id, i.listed FROM item i where i.id = %s'
+    data = (item_id, )
+    cursor.execute(query, data)
+
+    (seller_id, listed) = cursor.fetchone()
+
+    # If the user isn't the items seller, take us away
+    if seller_id != user_id or not listed:
+        return redirect(url_for('inventory'))
+
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
