@@ -385,7 +385,9 @@ def search_results(string):
     cursor = cnx.cursor()
 
     # Search for any items with a name containing the search string.
-    query = 'SELECT i.id, i.name, i.description, i.price, i.quantity FROM item i WHERE i.name LIKE %s;'
+    query = ('SELECT i.id, i.name, i.description, i.price, i.quantity '
+             'FROM item i '
+             'WHERE i.name LIKE %s AND i.listed;')
     data = ('%' + string + '%', )
     cursor.execute(query, data)
 
@@ -418,8 +420,6 @@ def item_page(item_id):
         for (result, result2 ) in cursor:
             num = result
             price = result2
-
-        print(price)
 
         query = 'UPDATE cart SET price = price + %s WHERE userId = %s;'
         data = (price, user_id)
@@ -617,7 +617,10 @@ def order_history():
     cnx = get_connector()
     cursor = cnx.cursor()
 
-    query = 'SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity FROM item i, takenItem t, purchase p, person u WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id ORDER BY p.purchaseDate DESC;'
+    query = ('SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity '
+             'FROM item i, takenItem t, purchase p, person u '
+             'WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id '
+             'ORDER BY p.purchaseDate DESC;')
     data = (user_id, )
     cursor.execute(query, data)
 
@@ -641,7 +644,7 @@ def inventory():
     # Get all the items that are sold by the current user
     query = ('SELECT i.id, i.name, i.description, i.price, i.quantity, c.name '
              'FROM item i, category c '
-             'WHERE i.seller_id = %s AND c.id = i.category_id')
+             'WHERE i.seller_id = %s AND c.id = i.category_id AND i.listed;')
     data = (user_id, )
     cursor.execute(query, data)
 
@@ -654,23 +657,23 @@ def inventory():
     return render_template('inventory.html', error=error, items=inventory)
 
 
-@app.route('/listing/<int:item_id>', methods=['GET', 'POST'])
+@app.route('/listing/<int:item_id>', methods=['GET'])
 @requires_log_in
-def edit_listing(item_id):
+def listing(item_id):
     error = None
     user_id = session['user_id']
     cnx = get_connector()
     cursor = cnx.cursor()
 
-    query = 'SELECT i.seller_id FROM item i where i.id = %s'
+    query = 'SELECT i.seller_id, i.listed FROM item i where i.id = %s'
     data = (item_id, )
     cursor.execute(query, data)
 
-    seller_id = (cursor.fetchone())[0]
+    (seller_id, listed) = cursor.fetchone()
 
     # If the user isn't the items seller, take us away
-    if seller_id != user_id:
-        return redirect(url_for('index'))
+    if seller_id != user_id or not listed:
+        return redirect(url_for('inventory'))
 
     item = get_item(item_id)
 
@@ -681,9 +684,79 @@ def edit_listing(item_id):
     for (category, ) in cursor:
         categories.append(category)
 
-    #TODO FINISH THE EDIT LISTING LOGIC! Preferably that will go in another function if possible
+    return render_template('listing.html', error=error, item=item, categories=categories)
 
-    return render_template('edit_listing.html', error=error, item=item, categories=categories)
+
+@app.route('/listing/edit/<int:item_id>', methods=['POST'])
+@requires_log_in
+def edit_listing(item_id):
+    # Get the new values
+    name = request.form['name']
+    description = request.form['description']
+    price = float(request.form['price'])
+    quantity = int(request.form['quantity'])
+    category_name = request.form['category']
+
+    old_item = get_item(item_id)
+
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    # If only the quantity has changed, we update the quantity of the item
+    if (old_item.name == name and old_item.description == description and
+            old_item.price == price and
+            old_item.category == category_name):
+        query = 'UPDATE item i SET i.quantity = %s WHERE i.id = %s'
+        data = (quantity, item_id)
+
+        cursor.execute(query, data)
+    # Otherwise we make a new item and update the whole database
+    else:
+        # Get the category id of selected category
+        query = 'SELECT c.id FROM category c WHERE c.name = %s'
+        data = (category_name, )
+        cursor.execute(query, data)
+        category_id = None
+        for (category_id_result, ) in cursor:
+            category_id = category_id_result
+
+        # Create the new item to replace the old item
+        query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s);"
+        data = (name, description, price, session['user_id'], quantity, category_id)
+        cursor.execute(query, data)
+
+        # Change the old item to be unlisted
+        query = "UPDATE item i SET i.listed = FALSE WHERE i.id = %s;"
+        data = (old_item.item_id, )
+        cursor.execute(query, data)
+
+        # Update the reviews to point the new listing
+        query = "UPDATE review r SET r.itemId = LAST_INSERT_ID() WHERE r.itemId = %s;"
+        cursor.execute(query, data)
+
+        # If the item is on the featured items table, update it to point to the new listing
+        query = "UPDATE featuredItem f SET f.itemId = LAST_INSERT_ID() WHERE f.itemId = %s;"
+        cursor.execute(query, data)
+
+        # Updates taken items in carts that are still in use to point to the new listing.
+        query = ("UPDATE takenItem t, cart c, person p "
+                 "SET t.itemId = LAST_INSERT_ID() "
+                 "WHERE t.itemId = %s AND t.cartId = c.id AND c.id = p.cartId;"
+                 )
+        cursor.execute(query, data)
+
+        # Update cart prices to reflect the new price of the item
+        query = ("UPDATE cart c, takenItem t, person p "
+                 "SET c.price = c.price + (t.quantity * (%s - %s)) "
+                 "WHERE t.itemId = LAST_INSERT_ID() AND t.cartId = c.id AND c.id = p.cartId;"
+                 )
+        data = (price, old_item.price)
+        cursor.execute(query, data)
+
+    cnx.commit()
+    cnx.close()
+
+    return redirect(url_for('inventory'))
 
 
 if __name__ == "__main__":
