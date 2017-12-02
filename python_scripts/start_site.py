@@ -440,8 +440,8 @@ def item_page(item_id):
                 cart_id = cart
 
             exists = False
-            query = 'SELECT i.itemId FROM takenItem i WHERE i.itemId = %s;'
-            data = (item_id, )
+            query = 'SELECT i.itemId FROM takenItem i, person p WHERE i.itemId = %s AND i.cartId = p.cartId AND p.id = %s;'
+            data = (item_id, user_id)
             cursor.execute(query, data)
             for item in cursor:
                 exists = True
