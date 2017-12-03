@@ -1,44 +1,55 @@
 <!doctype html>
 <html>
-  <head>
-    <title> Sell Item </title>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
-    
-  <body>
-    {% include 'navbar.html' %}
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        {% include 'navbar.html' %}
         <div class="container" id="root">
-          <div class="page-header" style="text-align: center;">
-            <h2> What item would you like to put up for sale? </h2>
-          </div>
-          <form method=post enctype=multipart/form-data>
-            <div class="row">
-              <div class="col-md-6"> Name: <input type="text" placeholder="name" name="name" value="{{ request.form.name }}"> </div>
-              <div class="col-md-6"> Description: <input type="text" placeholder="description" name="description" value="{{ request.form.description }}"> </div>
+          <div class="page-header"><h2>What would you like to sell with us?</h2></div>
+          <div class="panel panel-default">
+            <div class="panel-heading"><h4>Enter your info here</h4></div>
+            <div class="panel-body">
+              <form method="post">
+                <div class="form-group">
+                  <label for="name">Item Name</label>
+                  <input type="text" class="form-control" name="name" placeholder="Item Name" value="{{ request.form.name }}">
+                </div>
+                <div class="form-group">
+                  <label for="description">Description</label>
+                  <textarea type="text" class="form-control" rows="5" name="description" placeholder="Description" value="{{ request.form.description }}"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="category">Choose Category</label>
+                  <select class="form-control" name="category" value="{{ request.form.category }}">
+                    {% for category in categories %}
+                    <option>{{ category }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="price">Price</label>
+                  <input type="text" class="form-control" name="price" placeholder="Item Price" value="{{ request.form.price }}">
+                </div>
+                <div class="form-group">
+                  <label for="quantity">Quantity</label>
+                  <input type="text" class="form-control" name="quantity" placeholder="Quantity" value="{{ request.form.quantity }}">
+                </div>
+                <div class="form-group">
+                  <label class="btn btn-default">
+                    Browse <input type="file" name="file">
+                  </label>
+                </div>
+                <div class="form-group">
+                  <input class="btn btn-primary" type="submit" value="Add Item">
+                </div>
+              </form>
             </div>
-            <div class="row">
-              <div class="col-md-6"> Price: <input type="text" placeholder="price" name="price" value="{{ request.form.price }}"> </div>
-              <div class="col-md-6"> Quantity: <input type="text" placeholder="quantity" name="quantity" value="{{ request.form.quantity }}"> </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                Category: <select name="category" value="{{ request.form.category }}">
-                  {% for category in categories %}
-                    <option value="{{ category }}"> {{ category }} </option>
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-6">
-                Associated Image: <input type=file name=file>
-              </div>
-            </div>
-            <input class="btn btn-default" type="submit" value="Add Item">
-          </form>
-      </div>
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-      </div>
-  </body>
+          </div>      
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </body>
 </html>
