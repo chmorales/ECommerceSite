@@ -56,6 +56,7 @@ CREATE TABLE item (
     quantity INT NOT NULL,
     category_id INT NOT NULL,
     listed BOOLEAN NOT NULL DEFAULT TRUE,
+    reference INT NOT NULL,
     FOREIGN KEY (seller_id) REFERENCES person(id),
     FOREIGN KEY (category_id) REFERENCES category(id),
     CHECK (name <> ''),
@@ -95,3 +96,12 @@ CREATE TABLE featuredItem (
     itemId INT NOT NULL,
     FOREIGN KEY (itemId) REFERENCES item(id)
 );
+
+CREATE TABLE message (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    message TEXT,
+    recipientId INT,
+    sender TEXT,
+    FOREIGN KEY (recipientId) REFERENCES person(id)
+);
+
