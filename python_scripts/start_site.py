@@ -226,7 +226,7 @@ def profile():
         for (item_name) in item_cursor:
             reviews.append(Review(rating, description, item_id, session['first_name'], session['last_name'], item_name[0]))
 
-    query = ('SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity '
+    query = ('SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity, i.reference '
              'FROM item i, takenItem t, purchase p, person u '
              'WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id '
              'ORDER BY p.purchaseDate DESC;')
@@ -234,8 +234,8 @@ def profile():
     cursor.execute(query, data)
 
     purchases = []
-    for (item_id, item_name, purchase_date, price, email_address, quantity) in cursor:
-        purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
+    for (item_id, item_name, purchase_date, price, email_address, quantity, reference) in cursor:
+        purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity, reference))
 
     messages = []
     query = 'SELECT m.id, m.message, m.sender FROM message m WHERE m.recipientId = %s;'
@@ -373,34 +373,6 @@ def remove_from_cart(item_id):
 def hello():
     print(session['user_id'])
     return render_template('test.html')
-
-
-@app.route('/sale_history', methods=['GET', 'POST'])
-@requires_log_in
-def sales():
-    error = None
-    user_id = session['user_id']
-    cnx = get_connector()
-    cursor = cnx.cursor()
-
-    # Get the items that have been sold by the current user, and their
-    query = ("SELECT i.id, i.name, i.price, t.quantity, p.purchaseDate "
-             "FROM item i, takenItem t, cart c, purchase p "
-             "WHERE i.id = t.itemId AND i.seller_id = %s AND c.id = p.cartId;")
-    data = (user_id, )
-    cursor.execute(query, data)
-
-    purchases = []
-
-    # Make a list of all the purchases we will be displaying.
-    for (item_id, item_name, price, quantity, purchase_date) in cursor:
-        purchases.append(Purchase(item_id=item_id, item=item_name,
-                                  date=purchase_date, price=price,
-                                  seller=None, quantity=quantity))
-
-    cnx.close()
-
-    return render_template('sale_history.html', error=error, purchases=purchases)
 
 
 @app.route('/search', methods=['POST'])
@@ -555,9 +527,12 @@ def sell_item():
             for (category_id_result, ) in cursor:
                 category_id = category_id_result
 
-            query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s)"
+            query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference) VALUES (%s, %s, %s, %s, %s, %s, 0)"
             data = (name, description, price, session['user_id'], quantity, category_id)
             cursor.execute(query, data)
+
+            query = "UPDATE item i SET i.reference = LAST_INSERT_ID() WHERE i.id = LAST_INSERT_ID();"
+            cursor.execute(query)
 
             query = "SELECT MAX(i.id) FROM item i;"
             cursor.execute(query)
@@ -634,13 +609,14 @@ def review(item_id):
 
 
 class Purchase:
-        def __init__(self, item_id, item, date, price, seller, quantity):
+        def __init__(self, item_id, item, date, price, seller, quantity, reference=None):
             self.item_id = item_id
             self.item = item
             self.date = date
             self.price = price
             self.seller = seller
             self.quantity = quantity
+            self.reference = reference
 
 
 @app.route('/order_history', methods=['GET', 'POST'])
@@ -765,13 +741,19 @@ def edit_listing(item_id):
             category_id = category_id_result
 
         # Create the new item to replace the old item
-        query = 'INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES (%s, %s, %s, %s, %s, %s);'
-        data = (name, description, price, session['user_id'], quantity, category_id)
+        query = 'INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference) VALUES (%s, %s, %s, %s, %s, %s, %s);'
+        data = (name, description, price, session['user_id'], quantity, category_id, item_id)
         cursor.execute(query, data)
+
+        # We use the old item id for the next several queries
+        data = (old_item.item_id, )
 
         # Change the old item to be unlisted
         query = 'UPDATE item i SET i.listed = FALSE WHERE i.id = %s;'
-        data = (old_item.item_id, )
+        cursor.execute(query, data)
+
+        # Update the references to point to the new item
+        query = 'UPDATE item i SET i.reference = LAST_INSERT_ID() WHERE i.reference = %s;'
         cursor.execute(query, data)
 
         # Update the reviews to point the new listing

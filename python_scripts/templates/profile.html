@@ -16,7 +16,7 @@
                     <div class="page-header"><h2>Your Orders</h2></div>
                     {% for purchase in purchases %}
                     <div class="panel panel-default">
-                        <div class="panel-heading"><h4>{{ purchase.item }}</h4></div>
+                        <div class="panel-heading"><h4><a href="/item/{{ purchase.reference }}">{{ purchase.item }}</a></h4></div>
                         <div class="panel-body">
                             <div class="row">
                                 <div class="col-md-6"><p>Quantity: {{ purchase.quantity }}</p></div>
@@ -27,7 +27,7 @@
                                 <div class="col-md-6"><p>Seller: {{ purchase.seller }}</p></div>
                             </div>
                             <div style="align-items:center; margin: 0 auto;">
-                                <form action="{{ url_for('review', item_id=purchase.item_id) }}">
+                                <form action="{{ url_for('review', item_id=purchase.reference) }}">
                                     <button type="submit" name="add_to_cart" class="btn btn-primary"> Leave a review! </button>
                                 </form>
                             </div>

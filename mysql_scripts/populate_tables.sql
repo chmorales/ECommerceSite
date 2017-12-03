@@ -25,13 +25,13 @@ INSERT INTO category (name, description) VALUES
     ("Drugs", "Chris's Favorite Section"),
     ("Clothing", "warmy bois");
 
-INSERT INTO item (name, description, price, seller_id, quantity, category_id) VALUES
-    ("TV", "a TV", 56.66, 1, 2, 1),
-    ("Toaster", "Toasty", 3.33, 2, 1, 1),
-    ("Meth", "1 meth", 62.32, 2, 1, 4),
-    ("Dog", "a heckin cute pupper!", 4.42, 2, 3, 2),
-    ("Sean", "Sean Milligan", .02, 2, 1, 3),
-    ("Generic Item", "A generic item for sale", 0.99, 4, 99, 4);
+INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference) VALUES
+    ("TV", "a TV", 56.66, 1, 2, 1, 1),
+    ("Toaster", "Toasty", 3.33, 2, 1, 1, 2),
+    ("Meth", "1 meth", 62.32, 2, 1, 4, 3),
+    ("Dog", "a heckin cute pupper!", 4.42, 2, 3, 2, 4),
+    ("Sean", "Sean Milligan", .02, 2, 1, 3, 5),
+    ("Generic Item", "A generic item for sale", 0.99, 4, 99, 4, 6);
 
 /* We don't want to insert any purchases yet. */
 /* We don't want to insert any taken items yet. */

@@ -56,6 +56,7 @@ CREATE TABLE item (
     quantity INT NOT NULL,
     category_id INT NOT NULL,
     listed BOOLEAN NOT NULL DEFAULT TRUE,
+    reference INT NOT NULL,
     FOREIGN KEY (seller_id) REFERENCES person(id),
     FOREIGN KEY (category_id) REFERENCES category(id),
     CHECK (name <> ''),
