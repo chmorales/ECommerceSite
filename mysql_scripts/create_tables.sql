@@ -95,3 +95,12 @@ CREATE TABLE featuredItem (
     itemId INT NOT NULL,
     FOREIGN KEY (itemId) REFERENCES item(id)
 );
+
+CREATE TABLE message (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    message TEXT,
+    recipientId INT,
+    sender TEXT,
+    FOREIGN KEY (recipientId) REFERENCES person(id)
+);
+

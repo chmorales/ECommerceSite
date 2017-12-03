@@ -197,7 +197,7 @@ def logout():
 
 
 # You should be able to see order history, your reviews, and items you're selling
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @requires_log_in
 def profile():
     user_id = session['user_id']
@@ -205,6 +205,13 @@ def profile():
     # Get reviews that the user had posted
     cnx = get_connector()
     cursor = cnx.cursor()
+    
+    if request.method == 'POST':
+        query = 'DELETE FROM message where recipientId = %s AND id = %s;'
+        data = (user_id, request.form['id'])
+        cursor.execute(query, data)
+        cnx.commit()
+
     query = ('SELECT r.rating, r.description, r.itemId, r.userId FROM review r WHERE r.userId = %s;')
     data = (session['user_id'], )
     cursor.execute(query, data)
@@ -230,7 +237,16 @@ def profile():
     for (item_id, item_name, purchase_date, price, email_address, quantity) in cursor:
         purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
 
-    return render_template('profile.html', reviews=reviews, purchases=purchases)
+    messages = []
+    query = 'SELECT m.id, m.message, m.sender FROM message m WHERE m.recipientId = %s;'
+    data = (user_id, )
+    cursor.execute(query, data)
+    for (result1, result2, result3) in cursor:
+        messages.append((result1, result2, result3))
+
+    cnx.close()
+
+    return render_template('profile.html', reviews=reviews, purchases=purchases, messages=messages)
 
 
 @app.route("/cart", methods=['POST', 'GET'])
