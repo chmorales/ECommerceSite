@@ -559,6 +559,8 @@ def sell_item():
             cursor.execute(query, data)
             cnx.commit()
 
+            return redirect(url_for('item_page', item_id=item_id))
+
         except ValueError:
             error = 'Please enter valid numbers for the quantity and price.'
 
@@ -683,17 +685,23 @@ def listing(item_id):
 
     (seller_id, listed) = cursor.fetchone()
 
+    cnx.close()
+
     # If the user isn't the items seller, take us away
     if seller_id != user_id or not listed:
         return redirect(url_for('inventory'))
 
     if request.method == 'POST':
-        cnx.close()
         if 'edit' in request.form:
-            return edit_listing(item_id)
-
+            try:
+                return edit_listing(item_id)
+            except ValueError:
+                error = "Please input valid numbers for the quantity and price"
         if 'remove' in request.form:
             return remove_listing(item_id)
+
+    cnx = get_connector()
+    cursor = cnx.cursor()
 
     item = get_item(item_id)
 

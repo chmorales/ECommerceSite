@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title> Shopping Cart  </title>
   </head>
-  
+
   <body>
     {% include 'navbar.html' %}
     <div class="container" id="root">
@@ -19,7 +19,7 @@
                   <div class="row">
                     <div class="col-md-8">
                       <h3><a href="{{ url_for('item_page', item_id=item.item_id) }}">{{ item.name }}</a></h3>
-                    </div> 
+                    </div>
                     <div class="col-md-4">
                       <p>Total Price of Item: {{ '%0.2f' % item.total_price|float }}</p>
                     </div>
@@ -31,7 +31,7 @@
                       <div class="col-md-3"></div>
                       <div class="col-md-3">
                         <form action="{{ url_for('remove_from_cart', item_id=item.item_id) }}" method=post>
-                          <p> <input type="submit" value="Remove"> </p>
+                          <p> <input class="btn btn-primary" type="submit" value="Remove"> </p>
                         </form>
                       </div>
                     </div>
@@ -51,7 +51,7 @@
             {% endfor %}
               <p> Total Price of Cart: {{ '%0.2f' % cart_price|float }} </p>
               <form method=post>
-                <p> <input type="submit" value="Checkout"> </p>
+                <p> <input class="btn btn-default" type="submit" value="Checkout"> </p>
               </form>
           </div>
         </div>

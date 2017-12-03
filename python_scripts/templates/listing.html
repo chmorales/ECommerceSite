@@ -1,51 +1,62 @@
 <!doctype html>
 <html>
-  <head>
-    <title> Edit Listing </title>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-  </head>
-
-  <body>
-    {% include 'navbar.html' %}
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        {% include 'navbar.html' %}
         <div class="container" id="root">
-          <div class="page-header" style="text-align: center;">
-            <h2> Input desired changes to the listing</h2>
-          </div>
-          <form action="{{ url_for('listing', item_id=item.item_id) }}" method=post enctype=multipart/form-data>
-            <div class="row">
-              <div class="col-md-6"> Name: <input type="text" name="name" value="{{ item.name }}"> </div>
-              <div class="col-md-6"> Description: <input type="text" name="description" value="{{ item.description }}"> </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6"> Price: <input type="text" name="price" value="{{ item.price }}"> </div>
-              <div class="col-md-6"> Quantity: <input type="text" name="quantity" value="{{ item.quantity }}"> </div>
-            </div>
-            <div class="row">
-              <div class="col-md-6">
-                Category: <select name="category" value="{{ item.category }}">
-                  {% for category in categories %}
+            <div class="page-header"><h2>Edit listing for {{ item.name }}</h2></div>
+          <div class="panel panel-default">
+            <div class="panel-heading"><h4>Enter your info here</h4></div>
+            <div class="panel-body">
+                <form method="post">
+                <div class="form-group">
+                  <label for="name">Item Name</label>
+                  <input type="text" class="form-control" name="name" placeholder="Item Name" value="{{ item.name }}">
+                </div>
+                <div class="form-group">
+                  <label for="description">Description</label>
+                  <textarea type="text" class="form-control" rows="5" name="description" placeholder="Description">{{ item.description }}</textarea>
+                </div>
+                <div class="form-group">
+                  <label for="category">Choose Category</label>
+                  <select class="form-control" name="category" value="{{ item.category }}">
+                    {% for category in categories %}
                     {% if category != item.category %}
                         <option value="{{ category }}"> {{ category }} </option>
                     {% else %}
                         <option value="{{ category }}" selected> {{ category }} </option>
                     {% endif %}
-                  {% endfor %}
-                </select>
-              </div>
-              <div class="col-md-6">
-                Associated Image: <input type=file name=file>
-              </div>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="price">Price</label>
+                  <input type="text" class="form-control" name="price" placeholder="Item Price" value="{{ item.price }}">
+                </div>
+                <div class="form-group">
+                  <label for="quantity">Quantity</label>
+                  <input type="text" class="form-control" name="quantity" placeholder="Quantity" value="{{ item.quantity }}">
+                </div>
+                <div class="form-group">
+                  <label class="btn btn-default">
+                    Browse <input type="file" name="file">
+                  </label>
+                </div>
+                <div class="form-group">
+                  <input class="btn btn-primary" name='edit' type="submit" value="Edit Listing">
+                </div>
+              </form>
+              <form method=post>
+                <p> <input class="btn btn-default" name='remove' type="submit" value="Remove Listing"> </p>
+              </form>
             </div>
-            <p> <input class="btn btn-default" name='edit' type="submit" value="Save Changes"> </p>
-          </form>
-          <form action="{{ url_for('listing', item_id=item.item_id) }}" method=post>
-            <p> <input class="btn btn-default" name='remove' type="submit" value="Remove Listing"> </p>
-          </form>
-      </div>
-      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
-      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-      </div>
-  </body>
+          </div>      
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </body>
 </html>
