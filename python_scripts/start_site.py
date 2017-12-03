@@ -281,7 +281,9 @@ def shopping_cart():
     cursor.execute(query, data)
     cart_price = None
     for (result, ) in cursor:
-        cart_price = result
+        cart_price = round(result, 2)
+
+    print(cart_price)
 
     # Gets a list of item ids in the cart.
     item_ids = []
