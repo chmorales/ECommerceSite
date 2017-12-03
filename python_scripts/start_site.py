@@ -133,6 +133,7 @@ def login():
 
         elif 'create_account' in request.form:
             cnx = get_connector()
+            cnx.begin()
             cursor = cnx.cursor()
 
             # We need the email address, password, firstname, and lastname.
@@ -165,22 +166,19 @@ def login():
                 # Commit, close, and redirect.
                 cnx.commit()
                 cnx.close()
-                return redirect(url_for('hello'))
+                return redirect(url_for('index'))
 
             except pymysql.err.IntegrityError:
                 # Should only fire if the email address already exists in the database.
                 create_error = 'That email is already taken. Please try a new email.'
                 cnx.rollback()
+                cnx.close()
                 return render_template('login.html', error=error, create_error=create_error)
             except PasswordError:
                 create_error = 'Passwords must be 8 characters long or greater.'
                 cnx.rollback()
+                cnx.close()
                 return render_template('login.html', error=error, create_error=create_error)
-
-
-        elif 'search_input' in request.form:
-            search_string = request.form['search_input']
-            return redirect(url_for('search_results', string=search_string))
 
         cnx.close()
     return render_template('login.html', error=error, create_error=create_error)
@@ -621,30 +619,30 @@ class Purchase:
             self.reference = reference
 
 
-@app.route('/order_history', methods=['GET', 'POST'])
-@requires_log_in
-def order_history():
-    error = None
-
-    user_id = session['user_id']
-
-    cnx = get_connector()
-    cursor = cnx.cursor()
-
-    query = ('SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity '
-             'FROM item i, takenItem t, purchase p, person u '
-             'WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id '
-             'ORDER BY p.purchaseDate DESC;')
-    data = (user_id, )
-    cursor.execute(query, data)
-
-    purchases = []
-    for (item_id, item_name, purchase_date, price, email_address, quantity) in cursor:
-        purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
-
-    cnx.close()
-
-    return render_template('order_history.html', error=error, purchases=purchases)
+# @app.route('/order_history', methods=['GET', 'POST'])
+# @requires_log_in
+# def order_history():
+#     error = None
+#
+#     user_id = session['user_id']
+#
+#     cnx = get_connector()
+#     cursor = cnx.cursor()
+#
+#     query = ('SELECT i.id, i.name, p.purchaseDate, i.price, u.email_address, t.quantity '
+#              'FROM item i, takenItem t, purchase p, person u '
+#              'WHERE p.buyerId = %s AND i.id = t.itemId AND p.cartId = t.cartID AND u.id = i.seller_id '
+#              'ORDER BY p.purchaseDate DESC;')
+#     data = (user_id, )
+#     cursor.execute(query, data)
+#
+#     purchases = []
+#     for (item_id, item_name, purchase_date, price, email_address, quantity) in cursor:
+#         purchases.append(Purchase(item_id, item_name, purchase_date, price, email_address, quantity))
+#
+#     cnx.close()
+#
+#     return render_template('order_history.html', error=error, purchases=purchases)
 
 
 @app.route('/inventory', methods=['GET', 'POST'])
@@ -734,12 +732,14 @@ def edit_listing(item_id):
     if (old_item.name == name and old_item.description == description and
             old_item.price == price and
             old_item.category == category_name):
+        cnx.begin()
         query = 'UPDATE item i SET i.quantity = %s WHERE i.id = %s'
         data = (quantity, item_id)
 
         cursor.execute(query, data)
     # Otherwise we make a new item and update the whole database
     else:
+        cnx.begin()
         # Get the category id of selected category
         query = 'SELECT c.id FROM category c WHERE c.name = %s FOR UPDATE'
         data = (category_name, )
@@ -796,6 +796,7 @@ def edit_listing(item_id):
 def remove_listing(item_id):
     """ Remove listing transaction """
     cnx = get_connector()
+    cnx.begin()
     cursor = cnx.cursor()
     data = (item_id, )
 
