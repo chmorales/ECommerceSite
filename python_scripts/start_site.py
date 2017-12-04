@@ -771,6 +771,21 @@ def edit_listing(item_id):
         for (category_id_result, ) in cursor:
             category_id = category_id_result
 
+        query = 'SELECT p.id FROM person p, takenItem i, cart c WHERE i.itemId = %s AND i.cartId = c.id AND c.id = p.cartId;'
+        data = (old_item.item_id, )
+        cursor.execute(query, data)
+        users = []
+        for (result, ) in cursor:
+            users.append(result)
+
+        print(users)
+
+        for user in users:
+            query = 'INSERT INTO message (message, recipientId, sender) VALUES (%s, %s, %s);'
+            msg = 'The listing for ' + old_item.name + ' has been updated.'
+            data = (msg, user, 'SYSTEM')
+            cursor.execute(query, data)
+
         # Create the new item to replace the old item
         query = 'INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference) VALUES (%s, %s, %s, %s, %s, %s, %s);'
         data = (name, description, price, session['user_id'], quantity, category_id, item_id)
