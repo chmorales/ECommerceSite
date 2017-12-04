@@ -822,6 +822,20 @@ def remove_listing(item_id):
     cnx.close()
     return redirect(url_for('inventory'))
 
+@app.route('/checkout', methods=['GET', 'POST'])
+@requires_log_in
+def checkout():
+    # Get a list of states from the 'static/states.txt' file.
+    states = []
+    for line in open('static/states.txt', 'r'):
+        states.append(line)
+
+    # Get a list of states from the 'static/card_types.txt' file.
+    card_types = []
+    for line in open('static/card_types.txt', 'r'):
+        card_types.append(line)
+
+    return render_template("checkout.html", states=states, card_types=card_types)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)

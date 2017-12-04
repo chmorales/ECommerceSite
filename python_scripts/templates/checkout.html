@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        {% include 'navbar.html' %}
+        <div class="container" id="root">
+          <div class="page-header"><h2>Checkout</h2></div>
+          <div class="panel panel-default">
+            <div class="panel-heading"><h4>Please enter your information below.</h4></div>
+            <div class="panel-body">
+              <form method="post">
+                
+              <!-- Shipping Information -->      
+                <div class="row">
+                  <div class="col-md-6">
+                    Street Address: 
+                    <input type="text" class="form-control" name="name" value="{{ request.form.address }}">
+                  </div>
+                  <div class="col-md-3">
+                    Zip Code: 
+                    <input type="text" class="form-control" name="name" value="{{ request.form.zip }}">
+                  </div>
+                  <div class="col-md-3">
+                    State: 
+                  <select class="form-control" name="category" value="{{ request.form.state }}">
+                    {% for state in states %}
+                      <option>{{ state }}</option>
+                    {% endfor %}
+                  </select>
+                  </div>
+                </div>
+
+              <!-- Payment Information -->
+                <div class="row">
+                  <div class="col-md-3">
+                    Credit Card Number: 
+                    <input type="text" class="form-control" name="name" value="{{ request.form.number }}">
+                  </div>
+                  <div class="col-md-3">
+                    Expiration Date: 
+                    <input type="text" class="form-control" name="name" value="{{ request.form.expiration }}">
+                  </div>
+                  <div class="col-md-3">
+                    CCV: 
+                    <input type="text" class="form-control" name="name" value="{{ request.form.ccv }}">
+                  </div>
+                  <div class="col-md-3">
+                    Card Type: 
+                  <select class="form-control" name="category" value="{{ request.form.card_type }}">
+                    {% for card_type in card_types %}
+                      <option>{{ card_type }}</option>
+                    {% endfor %}
+                  </select>
+                  </div>
+                </div>
+
+
+                <div class="form-group">
+                  <input class="btn btn-primary" type="submit" value="Checkout">
+                </div>
+              </form>
+            </div>
+          </div>      
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </body>
+</html>
