@@ -74,16 +74,13 @@ def user_id_decorator(func):
 render_template = user_id_decorator(render_template)
 
 
-def get_item(item_id):
-    cnx = get_connector()
-    cursor = cnx.cursor()
+def get_item(cnx, cursor, item_id):
     query = 'SELECT i.name, i.description, i.price, i.quantity, s.email_address, c.name FROM item i, person s, category c WHERE i.id = %s AND i.category_id = c.id AND i.seller_id = s.id;'
     data = (item_id, )
     cursor.execute(query, data)
     item = None
     for (name, description, price, quantity, email_address, category_name) in cursor:
         item = Item(item_id, name, description, price, email_address, quantity, category_name)
-    cnx.close()
     return item
 
 
@@ -99,8 +96,10 @@ def index():
     cursor.execute(query)
 
     items = []
+    cnx2 = get_connector()
+    cursor2 = cnx2.cursor()
     for (item_id, ) in cursor:
-        items.append(get_item(item_id))
+        items.append(get_item(cnx2, cursor2, item_id))
     return render_template('homepage.html', items=items)
 
 class PasswordError(Exception):
@@ -470,7 +469,7 @@ def item_page(item_id):
     cursor.execute(query, data)
 
     # Walks through result, setting up object.
-    item = get_item(item_id)
+    item = get_item(cnx, cursor, item_id)
 
     # Gets the relevant review information.
     query = ('SELECT r.rating, r.description, r.userId FROM review r WHERE r.itemId = %s;')
@@ -701,7 +700,7 @@ def listing(item_id):
     cnx = get_connector()
     cursor = cnx.cursor()
 
-    item = get_item(item_id)
+    item = get_item(cnx, cursor, item_id)
 
     query = 'SELECT c.name FROM category c;'
     cursor.execute(query)
@@ -726,7 +725,7 @@ def edit_listing(item_id):
     quantity = int(request.form['quantity'])
     category_name = request.form['category']
 
-    old_item = get_item(item_id)
+    old_item = get_item(cnx, cursor, item_id)
 
     # If only the quantity has changed, we update the quantity of the item
     if (old_item.name == name and old_item.description == description and
