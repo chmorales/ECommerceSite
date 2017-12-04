@@ -12,7 +12,7 @@
           <div class="panel panel-default">
             <div class="panel-heading"><h4>Enter your info here</h4></div>
             <div class="panel-body">
-              <form method="post">
+              <form method="post" enctype="multipart/form-data">
                 <div class="form-group">
                   <label for="name">Item Name</label>
                   <input type="text" class="form-control" name="name" placeholder="Item Name" value="{{ request.form.name }}">
