@@ -893,5 +893,19 @@ def checkout():
 
     return render_template("checkout.html", states=states, card_types=card_types)
 
+@app.route('/all')
+def all():
+    cnx = get_connector()
+    cursor = cnx.cursor()
+
+    query = 'SELECT id, name, description, price, quantity FROM item WHERE id = reference AND listed ORDER BY name ASC;'
+    cursor.execute(query)
+    items = []
+    for (item_id, name, description, price, quantity) in cursor:
+        items.append(Item(item_id, name, description, price, None, quantity, None))
+    
+    cnx.close()
+    return render_template('all.html', items=items)
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)
