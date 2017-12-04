@@ -675,9 +675,11 @@ def review(item_id):
         except ValueError:
             error = 'Please enter a valid number for the rating, between 1 and 5 inclusive.'
 
+    item = get_item(cnx, cursor, item_id)
+
     cnx.close()
 
-    return render_template('give_review.html', error=error)
+    return render_template('leave_review.html', error=error, item=item)
 
 
 class Purchase:
