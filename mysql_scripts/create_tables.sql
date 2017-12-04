@@ -102,6 +102,7 @@ CREATE TABLE message (
     message TEXT,
     recipientId INT,
     sender TEXT,
+    unread BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (recipientId) REFERENCES person(id)
 );
 
