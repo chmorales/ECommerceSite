@@ -258,28 +258,7 @@ def shopping_cart():
 
     # User is trying to buy the cart.
     if request.method == 'POST':
-
-        # Get the current user's cartId.
-        query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
-        data = (user_id, )
-        cursor.execute(query, data)
-        cart_id = None
-        for (result, ) in cursor:
-            cart_id = result
-
-        query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
-        cursor.execute(query)
-
-        # Update the user's cart to that one.
-        query = 'UPDATE person SET cartId = LAST_INSERT_ID();'
-        cursor.execute(query)
-
-        # Put the old cart into a saved purchase slot.
-        query = 'INSERT INTO purchase (buyerId, cartId, purchaseDate) VALUES (%s, %s, NOW());'
-        data = (user_id, cart_id)
-        cursor.execute(query, data)
-
-        cnx.commit()
+        return redirect(url_for('checkout'))
 
     # Gets the current user's cartId.
     curr_cart_id = None
@@ -825,6 +804,38 @@ def remove_listing(item_id):
 @app.route('/checkout', methods=['GET', 'POST'])
 @requires_log_in
 def checkout():
+    
+    if request.method == 'POST':
+        cnx = get_connector()
+        cursor = cnx.cursor()
+
+        user_id = session['user_id']
+
+        # Get the current user's cartId.
+        query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
+        data = (user_id, )
+        cursor.execute(query, data)
+        cart_id = None
+        for (result, ) in cursor:
+            cart_id = result
+
+        query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
+        cursor.execute(query)
+
+        # Update the user's cart to that one.
+        query = 'UPDATE person SET cartId = LAST_INSERT_ID();'
+        cursor.execute(query)
+
+        # Put the old cart into a saved purchase slot.
+        query = 'INSERT INTO purchase (buyerId, cartId, purchaseDate) VALUES (%s, %s, NOW());'
+        data = (user_id, cart_id)
+        cursor.execute(query, data)
+
+        cnx.commit()
+        cnx.close()
+
+        return redirect(url_for('shopping_cart'))
+    
     # Get a list of states from the 'static/states.txt' file.
     states = []
     for line in open('static/states.txt', 'r'):
