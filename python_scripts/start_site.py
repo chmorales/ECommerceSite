@@ -757,23 +757,45 @@ def listing(item_id):
 
     (seller_id, listed) = cursor.fetchone()
 
-    cnx.close()
-
     # If the user isn't the items seller, take us away
     if seller_id != user_id or not listed:
         return redirect(url_for('inventory'))
 
     if request.method == 'POST':
+        old_item = get_item(cnx, cursor, item_id)
+
+        query = 'SELECT p.id FROM person p, takenItem i, cart c WHERE i.itemId = %s AND i.cartId = c.id AND c.id = p.cartId;'
+        data = (old_item.item_id, )
+        cursor.execute(query, data)
+        users = []
+        for (result, ) in cursor:
+            users.append(result)
+
         if 'edit' in request.form:
             try:
+                for user in users:
+                    query = 'INSERT INTO message (message, recipientId, sender) VALUES (%s, %s, %s);'
+                    msg = 'The listing for ' + old_item.name + ' has been updated.'
+                    data = (msg, user, 'SYSTEM')
+                    cursor.execute(query, data)
+
+                cnx.commit()
+                cnx.close()
+
                 return edit_listing(item_id)
             except ValueError:
                 error = "Please input valid numbers for the quantity and price"
         if 'remove' in request.form:
-            return remove_listing(item_id)
+            for user in users:
+                query = 'INSERT INTO message (message, recipientId, sender) VALUES (%s, %s, %s);'
+                msg = 'The listing for ' + old_item.name + ' has been removed.'
+                data = (msg, user, 'SYSTEM')
+                cursor.execute(query, data)
 
-    cnx = get_connector()
-    cursor = cnx.cursor()
+            cnx.commit()
+            cnx.close()
+
+            return remove_listing(item_id)
 
     item = get_item(cnx, cursor, item_id)
 
@@ -783,6 +805,8 @@ def listing(item_id):
     categories = []
     for (category, ) in cursor:
         categories.append(category)
+
+    cnx.close()
 
     return render_template('listing.html', error=error, item=item,
                            categories=categories)
@@ -821,21 +845,6 @@ def edit_listing(item_id):
         category_id = None
         for (category_id_result, ) in cursor:
             category_id = category_id_result
-
-        query = 'SELECT p.id FROM person p, takenItem i, cart c WHERE i.itemId = %s AND i.cartId = c.id AND c.id = p.cartId;'
-        data = (old_item.item_id, )
-        cursor.execute(query, data)
-        users = []
-        for (result, ) in cursor:
-            users.append(result)
-
-        print(users)
-
-        for user in users:
-            query = 'INSERT INTO message (message, recipientId, sender) VALUES (%s, %s, %s);'
-            msg = 'The listing for ' + old_item.name + ' has been updated.'
-            data = (msg, user, 'SYSTEM')
-            cursor.execute(query, data)
 
         # Create the new item to replace the old item
         query = 'INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference) VALUES (%s, %s, %s, %s, %s, %s, %s);'
