@@ -47,4 +47,6 @@ INSERT INTO featuredItem (itemId) SELECT i.id FROM item i LIMIT 10;
 INSERT INTO message (message, recipientId, sender ) VALUES 
     ("This is a test message.", 2, "SYSTEM"),
     ("This is another test message.", 2, "SYSTEM"),
-    ("This is a message from another user.", 2, "B.Admin@gmail.com");
+    ("This is a message from another user.", 2, "B.Admin@gmail.com"),
+    ("This is a reply to a user.", 1, "amulieri@gmail.com"),
+    ("This is another reply to a user.", 2, "B.Admin@gmail.com");

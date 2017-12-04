@@ -204,10 +204,13 @@ def profile():
     cursor = cnx.cursor()
     
     if request.method == 'POST':
-        query = 'DELETE FROM message WHERE recipientId = %s AND id = %s;'
-        data = (user_id, request.form['id'])
-        cursor.execute(query, data)
-        cnx.commit()
+        if 'delete' in request.form:
+            query = 'DELETE FROM message WHERE recipientId = %s AND id = %s;'
+            data = (user_id, request.form['id'])
+            cursor.execute(query, data)
+            cnx.commit()
+        if 'reply' in request.form:
+            return redirect(url_for('message', message_id = request.form['id']))
 
     query = ('SELECT r.rating, r.description, r.itemId, r.userId FROM review r WHERE r.userId = %s;')
     data = (session['user_id'], )
@@ -245,6 +248,39 @@ def profile():
 
     return render_template('profile.html', reviews=reviews, purchases=purchases, messages=messages)
 
+@app.route("/message/<int:other_id>", methods=['POST', 'GET'])
+@requires_log_in
+def message(other_id):
+    cnx = get_connector()
+    cursor = cnx.cursor()
+    user_id = session['user_id']
+
+    if request.method == 'POST':
+        query = 'SELECT p.email_address FROM person p WHERE p.id = %s;'
+        data = (user_id, )
+        cursor.execute(query, data)
+        user_email = None
+        for (result, ) in cursor:
+            user_email = result
+
+        query = 'INSERT INTO message (message, recipientId, sender) VALUES (%s, %s, %s);'
+        data = (request.form['message'], other_id, user_email)
+        cursor.execute(query, data)
+
+        cnx.commit()
+
+    query = 'SELECT m.sender, m.message, m.id, p.id FROM message m, person p WHERE p.email_address = m.sender AND (m.recipientId = %s OR m.sender = p.email_address AND p.id = %s) ORDER BY m.id ASC;'
+    data = (user_id, user_id)
+    cursor.execute(query, data)
+    messages = []
+    for (result1, result2, result3, result4) in cursor:
+        c = 'f' if result4 == user_id else 't'
+        messages.append((result1, result2, c))
+
+    cnx.close()
+
+    return render_template('message.html', messages=messages)
+    
 
 @app.route("/cart", methods=['POST', 'GET'])
 @requires_log_in

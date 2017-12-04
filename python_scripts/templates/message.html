@@ -1,0 +1,52 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+    </head>
+    <body>
+        {% include 'navbar.html' %}
+        <!-- Begin here -->
+        <div class="container">
+            <div class="page-header text-center">
+                <h2> Messages </h2>
+            </div>
+                {% for sender, message, c in messages %}
+            <div class="row">
+                {% if c == 't' %}
+                <div style="float:left">
+                {% else %}
+                <div style="float:right">
+                {% endif %}
+                    <div class="panel panel-default">
+                        <div class="panel-heading"><h3>{{ sender }}</h3></div>
+                        <div class="panel-body">
+                            <div class="row">
+                                <div class="col-md-6"><p>{{ message }}</p></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+                {% endfor %}
+
+
+            <div class="row">
+              <div class="col-md-3">
+                Reply:
+              </div>
+              <div class="col-md-9">
+                <form method="POST">
+                  <input style="width:100%;" type="text" placeholder="Reply" name="message">
+                  <button type="submit">Send</button>
+                </form>
+
+              </div>
+            </div>
+
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    </body>
+</html>

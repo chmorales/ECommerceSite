@@ -46,21 +46,29 @@
             </div>
         </div>        
 
-        <h2> Messages: </h2>
+        <h2> Unread Messages: </h2>
         {% for id, message, sender in messages %}
         <div class="row">
-          <div class="col-md-6">
+          <div class="col-md-5">
             {{ message }}
           </div>
           <div class="col-md-3">
             From: {{ sender }}
           </div>
-          <div class="col-md-3">
+          <div class="col-md-2">
             <form method=post>
               <input type="hidden" name="id" value="{{id}}" />
-              <input type="submit" name="delete" value="Delete">
+              <input type="submit" name="delete" value="Read">
             </form>
           </div>
+          {% if sender != "SYSTEM" %}
+            <div class="col-md-2">
+              <form method=post>
+                <input type="hidden" name="id" value="{{id}}" />
+                <input type="submit" name="reply" value="Reply">
+              </form>
+            </div>
+          {% endif %}
         </div>
         {% endfor %}
                          
