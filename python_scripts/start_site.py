@@ -272,7 +272,6 @@ def message(other_id):
 
     if request.method == 'POST':
         query = 'INSERT INTO message (message, recipientId, sender) VALUES (%s, %s, %s);'
-        print(other_id)
         data = (request.form['message'], other_id, user_email)
         cursor.execute(query, data)
 
@@ -313,7 +312,6 @@ def message_user(other_id):
 
     if request.method == 'POST':
         query = 'INSERT INTO message (message, recipientId, sender) VALUES (%s, %s, %s);'
-        print(other_id)
         data = (request.form['message'], other_id, user_email)
         cursor.execute(query, data)
 
@@ -359,8 +357,6 @@ def shopping_cart():
     cart_price = None
     for (result, ) in cursor:
         cart_price = round(result, 2)
-
-    print(cart_price)
 
     # Gets a list of item ids in the cart.
     item_ids = []
@@ -432,7 +428,6 @@ def remove_from_cart(item_id):
 
 @app.route("/hello")
 def hello():
-    print(session['user_id'])
     return render_template('test.html')
 
 
@@ -485,10 +480,7 @@ def item_page(item_id):
 
     if request.method == 'POST':
 
-        print(request.form)
-
         if 'message_vendor' in request.form:
-            print(request.form)
             return redirect(url_for('message_user', other_id=seller_id))
 
         if 'user_id' not in session:
@@ -568,7 +560,6 @@ def item_page(item_id):
     cnx.close()
 
     filename = str(item_id)
-    print(filename)
 
     return render_template('item.html', item=item, ratings=reviews, filename=filename, vendor_id=seller_id)
 
@@ -926,6 +917,7 @@ def remove_listing(item_id):
 def checkout():
     
     if request.method == 'POST':
+
         cnx = get_connector()
         cursor = cnx.cursor()
 
