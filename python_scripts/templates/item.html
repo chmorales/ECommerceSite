@@ -22,13 +22,14 @@
               <p>Quantity: {{ item.quantity }}</p>
               <p>Category: {{ item.category }}</p>
               <p>Vendor: {{ item.seller }}</p>
-              {% if item.quantity != 0 %}
               <form method="post">
+              {% if item.quantity != 0 %}
                 <button type="submit" name="add_to_cart" class="btn btn-primary">Add to Cart</button>
-              </form>
               {% else %}
               <button style="opacity: 0.65; cursor: not-allowed;">Sold Out!</button>
               {% endif %}
+                      <button type="submit" name="message_vendor" class="btn btn-primary" values="{{request.form.vendor_id}}">Message Vendor</button>
+              </form>
             </div>
           </div>
           <div class="page-header" style="text-align:center;">

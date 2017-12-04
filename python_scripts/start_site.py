@@ -290,6 +290,46 @@ def message(other_id):
 
     return render_template('message.html', messages=messages)
     
+@app.route("/message_user/<int:other_id>", methods=['POST', 'GET'])
+@requires_log_in
+def message_user(other_id):
+    cnx = get_connector()
+    cursor = cnx.cursor()
+    user_id = session['user_id']
+        
+    query = 'SELECT p.email_address FROM person p WHERE p.id = %s;'
+    data = (user_id, )
+    cursor.execute(query, data)
+    user_email = None
+    for (result, ) in cursor:
+        user_email = result
+
+    query = 'SELECT p.email_address FROM person p WHERE p.id = %s;'
+    data = (other_id, )
+    cursor.execute(query, data)
+    other_email = None
+    for (result, ) in cursor:
+        other_email = result
+
+    if request.method == 'POST':
+        query = 'INSERT INTO message (message, recipientId, sender) VALUES (%s, %s, %s);'
+        print(other_id)
+        data = (request.form['message'], other_id, user_email)
+        cursor.execute(query, data)
+
+        cnx.commit()
+
+    query = 'SELECT m.sender, m.message, m.id, m.recipientId FROM message m WHERE m.recipientId = %s AND m.sender = %s OR m.recipientId = %s AND m.sender = %s ORDER BY m.id ASC;'
+    data = (user_id, other_email, other_id, user_email)
+    cursor.execute(query, data)
+    messages = []
+    for (result1, result2, result3, result4) in cursor:
+        c = 't' if result4 == user_id else 'f'
+        messages.append((result1, result2, c))
+
+    cnx.close()
+
+    return render_template('message.html', messages=messages)
 
 @app.route("/cart", methods=['POST', 'GET'])
 @requires_log_in
@@ -435,7 +475,21 @@ def item_page(item_id):
     cnx = get_connector()
     cursor = cnx.cursor()
 
+    # Gets relevant information from item table.
+    query = 'SELECT i.seller_id FROM item i WHERE i.id = %s;'
+    data = (item_id, )
+    cursor.execute(query, data)
+    seller_id = None
+    for (result, ) in cursor:
+        seller_id = result
+
     if request.method == 'POST':
+
+        print(request.form)
+
+        if 'message_vendor' in request.form:
+            print(request.form)
+            return redirect(url_for('message_user', other_id=seller_id))
 
         if 'user_id' not in session:
             return redirect(url_for('index'))
@@ -487,11 +541,6 @@ def item_page(item_id):
 
         cnx.commit()
 
-    # Gets relevant information from item table.
-    query = 'SELECT i.name, i.description, i.price, i.seller_id, i.quantity, i.category_id FROM item i WHERE i.id = %s;'
-    data = (item_id, )
-    cursor.execute(query, data)
-
     # Walks through result, setting up object.
     item = get_item(cnx, cursor, item_id)
 
@@ -521,7 +570,7 @@ def item_page(item_id):
     filename = str(item_id)
     print(filename)
 
-    return render_template('item.html', item=item, ratings=reviews, filename = filename)
+    return render_template('item.html', item=item, ratings=reviews, filename=filename, vendor_id=seller_id)
 
 
 @app.route('/sell_item', methods=['GET', 'POST'])
