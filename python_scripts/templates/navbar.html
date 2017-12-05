@@ -17,11 +17,11 @@
         <ul class="nav navbar-nav navbar-right">
             {% if logged_in %}
             <li><a href="/sell_item">Sell</a></li>
-            <li><a href="/inventory">Your Inventory</a></li>
+            <li><a href="/inventory">{{ first_name }}'s Inventory</a></li>
             <li><a href="/cart">{{ first_name }}'s Cart</a></li>
             <li><a href="/profile">
                 {% if logged_in %}
-                {{ first_name }} {{ last_name }}
+                {{ first_name }}'s Profile
                 {% else %}
                 Profile
                 {% endif %}
