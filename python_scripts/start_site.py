@@ -484,7 +484,7 @@ def item_page(item_id):
             return redirect(url_for('message_user', other_id=seller_id))
 
         if 'user_id' not in session:
-            return redirect(url_for('index'))
+            return redirect(url_for('login'))
         user_id = session['user_id']
 
         query = 'SELECT i.quantity, i.price FROM item i WHERE i.id = %s;'
