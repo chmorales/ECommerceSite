@@ -83,6 +83,17 @@ def get_item(cnx, cursor, item_id):
         item = Item(item_id, name, description, price, email_address, quantity, category_name)
     return item
 
+def get_categories():
+    cnx = get_connector()
+    cursor = cnx.cursor()
+    query = 'SELECT c.name FROM category c ORDER BY c.name;'
+    cursor.execute(query)
+    categories = []
+    for (result, ) in cursor:
+        categories.append(result)
+    categories.insert(0, 'All')
+    cnx.close()
+    return categories
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -100,7 +111,7 @@ def index():
     cursor2 = cnx2.cursor()
     for (item_id, ) in cursor:
         items.append(get_item(cnx2, cursor2, item_id))
-    return render_template('homepage.html', items=items)
+    return render_template('homepage.html', items=items, categories=get_categories())
 
 class PasswordError(Exception):
     pass
@@ -128,7 +139,7 @@ def login():
                 session['last_name'] = last_name
                 return redirect(url_for('index'))
             error = 'Invalid email and password combonation.'
-            return render_template('login.html', error=error, create_error=create_error)
+            return render_template('login.html', error=error, create_error=create_error, categories=get_categories())
 
         elif 'create_account' in request.form:
             cnx = get_connector()
@@ -172,15 +183,15 @@ def login():
                 create_error = 'That email is already taken. Please try a new email.'
                 cnx.rollback()
                 cnx.close()
-                return render_template('login.html', error=error, create_error=create_error)
+                return render_template('login.html', error=error, create_error=create_error, categories=get_categories())
             except PasswordError:
                 create_error = 'Passwords must be 8 characters long or greater.'
                 cnx.rollback()
                 cnx.close()
-                return render_template('login.html', error=error, create_error=create_error)
+                return render_template('login.html', error=error, create_error=create_error, categories=get_categories())
 
         cnx.close()
-    return render_template('login.html', error=error, create_error=create_error)
+    return render_template('login.html', error=error, create_error=create_error, categories=get_categories())
 
 
 @app.route('/logout')
@@ -246,7 +257,7 @@ def profile():
 
     cnx.close()
 
-    return render_template('profile.html', reviews=reviews, purchases=purchases, messages=messages)
+    return render_template('profile.html', reviews=reviews, purchases=purchases, messages=messages, categories=get_categories())
 
 @app.route("/message/<int:other_id>", methods=['POST', 'GET'])
 @requires_log_in
@@ -287,7 +298,7 @@ def message(other_id):
 
     cnx.close()
 
-    return render_template('message.html', messages=messages)
+    return render_template('message.html', messages=messages, categories=get_categories())
     
 @app.route("/message_user/<int:other_id>", methods=['POST', 'GET'])
 @requires_log_in
@@ -327,7 +338,7 @@ def message_user(other_id):
 
     cnx.close()
 
-    return render_template('message.html', messages=messages)
+    return render_template('message.html', messages=messages, categories=get_categories())
 
 @app.route("/cart", methods=['POST', 'GET'])
 @requires_log_in
@@ -378,7 +389,7 @@ def shopping_cart():
             # Construct and append the object.
             items.append(Item(item_id, name, description, price, email_address, quantities[item_id], None))
 
-    return render_template('cart.html', items=items, cart_price=cart_price)
+    return render_template('cart.html', items=items, cart_price=cart_price, categories=get_categories())
 
 
 @app.route("/cart/remove/<int:item_id>", methods=['POST'])
@@ -428,31 +439,40 @@ def remove_from_cart(item_id):
 
 @app.route("/hello")
 def hello():
-    return render_template('test.html')
+    return render_template('test.html', categories=get_categories())
 
 
 @app.route('/search', methods=['POST'])
 def search():
     if request.method == 'POST':
         search_string = request.form['search_input']
-        return redirect(url_for('search_results', string=search_string))
+        category_name = request.form['search_category']
+        return redirect(url_for('search_results', string=search_string, category_name = category_name))
 
 
-@app.route('/search/<string:string>', methods=['GET', 'POST'])
-def search_results(string):
+@app.route('/search/<string:string>/<string:category_name>', methods=['GET', 'POST'])
+def search_results(string, category_name):
     if request.method == 'POST':
         search_string = request.form['search_input']
-        return redirect(url_for('search_results.html', string=search_string))
+        category_name = request.form['search_category']
+        return redirect(url_for('search_results', string=search_string, category_name = category_name))
 
     # Get the database connection.
     cnx = get_connector()
     cursor = cnx.cursor()
 
-    # Search for any items with a name containing the search string.
-    query = ('SELECT i.id, i.name, i.description, i.price, i.quantity '
-             'FROM item i '
-             'WHERE i.name LIKE %s AND i.listed;')
-    data = ('%' + string + '%', )
+    print(request.form)
+
+    if category_name == 'All':
+        # Search for any items with a name containing the search string.
+        query = ('SELECT i.id, i.name, i.description, i.price, i.quantity '
+                'FROM item i '
+                'WHERE i.name LIKE %s AND i.listed;')
+        data = ('%' + string + '%', )
+    else:
+        query = 'SELECT i.id, i.name, i.description, i.price, i.quantity FROM item i, category c WHERE i.category_id = c.id AND c.name = %s AND i.name LIKE %s AND i.listed;'
+        data = (category_name, '%' + string + '%')
+    
     cursor.execute(query, data)
 
     # Save the results into a list of items.
@@ -461,7 +481,7 @@ def search_results(string):
         items.append(Item(item_id, name, description, price, None, quantity, None))
 
     cnx.close()
-    return render_template('search_results.html', items=items, search_string=string)
+    return render_template('search_results.html', items=items, search_string=string, categories=get_categories())
 
 
 @app.route('/item/<int:item_id>', methods=['GET', 'POST'])
@@ -561,7 +581,7 @@ def item_page(item_id):
 
     filename = str(item_id)
 
-    return render_template('item.html', item=item, ratings=reviews, filename=filename, vendor_id=seller_id)
+    return render_template('item.html', item=item, ratings=reviews, filename=filename, vendor_id=seller_id, categories=get_categories())
 
 
 @app.route('/sell_item', methods=['GET', 'POST'])
@@ -634,7 +654,7 @@ def sell_item():
 
     cnx.close()
 
-    return render_template('sell_item.html', error=error, categories=categories)
+    return render_template('sell_item.html', error=error, categories2=categories, categories=get_categories())
 
 
 @app.route('/review/<int:item_id>', methods=['GET', 'POST'])
@@ -670,7 +690,7 @@ def review(item_id):
 
     cnx.close()
 
-    return render_template('leave_review.html', error=error, item=item)
+    return render_template('leave_review.html', error=error, item=item, categories=get_categories())
 
 
 class Purchase:
@@ -731,7 +751,7 @@ def inventory():
 
     cnx.close()
 
-    return render_template('inventory.html', error=error, items=inventory)
+    return render_template('inventory.html', error=error, items=inventory, categories=get_categories())
 
 
 @app.route('/listing/<int:item_id>', methods=['GET', 'POST'])
@@ -800,7 +820,7 @@ def listing(item_id):
     cnx.close()
 
     return render_template('listing.html', error=error, item=item,
-                           categories=categories)
+                           categories2=categories, categories=get_categories())
 
 
 def edit_listing(item_id):
@@ -958,7 +978,7 @@ def checkout():
     for line in open('static/card_types.txt', 'r'):
         card_types.append(line)
 
-    return render_template("checkout.html", states=states, card_types=card_types)
+    return render_template("checkout.html", states=states, card_types=card_types, categories=get_categories())
 
 @app.route('/all')
 def all():
@@ -972,7 +992,7 @@ def all():
         items.append(Item(item_id, name, description, price, None, quantity, None))
     
     cnx.close()
-    return render_template('all.html', items=items)
+    return render_template('all.html', items=items, categories=get_categories())
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80)

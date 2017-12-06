@@ -24,7 +24,7 @@
                 <div class="form-group">
                   <label for="category">Choose Category</label>
                   <select class="form-control" name="category" value="{{ request.form.category }}">
-                    {% for category in categories %}
+                    {% for category in categories2 %}
                     <option>{{ category }}</option>
                     {% endfor %}
                   </select>

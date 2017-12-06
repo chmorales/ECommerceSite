@@ -25,7 +25,7 @@
             <div class="row">
               <div class="col-md-6">
                 Category: <select name="category" value="{{ item.category }}">
-                  {% for category in categories %}
+                  {% for category in categories2 %}
                     {% if category != item.category %}
                         <option value="{{ category }}"> {{ category }} </option>
                     {% else %}
