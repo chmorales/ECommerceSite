@@ -2,4 +2,7 @@
 
 set -e
 
-python3 python_scripts/start_site.py
+cd python_scripts/
+
+python3 start_site.py & cd ../
+
