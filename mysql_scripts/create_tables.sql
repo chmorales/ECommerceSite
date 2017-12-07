@@ -57,6 +57,7 @@ CREATE TABLE item (
     category_id INT NOT NULL,
     listed BOOLEAN NOT NULL DEFAULT TRUE,
     reference INT NOT NULL,
+    imageLink TEXT,
     FOREIGN KEY (seller_id) REFERENCES person(id),
     FOREIGN KEY (category_id) REFERENCES category(id),
     CHECK (name <> ''),

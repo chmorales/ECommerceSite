@@ -10,7 +10,7 @@ ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 
 class Item:
     def __init__(self, item_id, name, description, price, seller, quantity,
-                 category):
+                 category, image_link):
         self.item_id = item_id
         self.name = name
         self.description = description
@@ -18,6 +18,7 @@ class Item:
         self.seller = seller
         self.quantity = quantity
         self.category = category
+        self.image_link = image_link
         self.total_price = None
         if self.price is not None and self.quantity is not None:
             self.total_price = self.price * self.quantity
@@ -75,12 +76,12 @@ render_template = user_id_decorator(render_template)
 
 
 def get_item(cnx, cursor, item_id):
-    query = 'SELECT i.name, i.description, i.price, i.quantity, s.email_address, c.name FROM item i, person s, category c WHERE i.id = %s AND i.category_id = c.id AND i.seller_id = s.id;'
+    query = 'SELECT i.name, i.description, i.price, i.quantity, s.email_address, c.name, i.imageLink FROM item i, person s, category c WHERE i.id = %s AND i.category_id = c.id AND i.seller_id = s.id;'
     data = (item_id, )
     cursor.execute(query, data)
     item = None
-    for (name, description, price, quantity, email_address, category_name) in cursor:
-        item = Item(item_id, name, description, price, email_address, quantity, category_name)
+    for (name, description, price, quantity, email_address, category_name, image_link) in cursor:
+        item = Item(item_id, name, description, price, email_address, quantity, category_name, image_link)
     return item
 
 def get_categories():
@@ -387,7 +388,7 @@ def shopping_cart():
         cursor.execute(query, data)
         for (name, description, price, email_address) in cursor:
             # Construct and append the object.
-            items.append(Item(item_id, name, description, price, email_address, quantities[item_id], None))
+            items.append(Item(item_id, name, description, price, email_address, quantities[item_id], None, None))
 
     return render_template('cart.html', items=items, cart_price=cart_price, categories=get_categories())
 
@@ -579,7 +580,11 @@ def item_page(item_id):
         cnx2.close()
     cnx.close()
 
-    filename = str(item_id)
+    if item.image_link is None:
+        f = 'miss_img'
+    else:
+        f = item.image_link
+    filename = url_for('static', filename=f)
 
     return render_template('item.html', item=item, ratings=reviews, filename=filename, vendor_id=seller_id, categories=get_categories())
 
@@ -601,6 +606,19 @@ def sell_item():
             quantity = int(request.form['quantity'])
             category_name = request.form['category']
 
+            query = "SELECT MAX(i.id) FROM item i;"
+            cursor.execute(query)
+            item_id = None
+            for (result, ) in cursor:
+                item_id = result + 1
+
+            uploaded = False
+            if 'file' in request.files:
+                f = request.files['file']
+                if f and allowed_file(f.filename):
+                    f.save(os.path.join(app.config['UPLOAD_FOLDER'], str(item_id)))
+                    uploaded = True
+
             query = 'SELECT c.id FROM category c WHERE c.name = %s'
             data = (category_name, )
             cursor.execute(query, data)
@@ -608,23 +626,16 @@ def sell_item():
             for (category_id_result, ) in cursor:
                 category_id = category_id_result
 
-            query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference) VALUES (%s, %s, %s, %s, %s, %s, 0)"
-            data = (name, description, price, session['user_id'], quantity, category_id)
+            if not uploaded:
+                query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference) VALUES (%s, %s, %s, %s, %s, %s, 0)"
+                data = (name, description, price, session['user_id'], quantity, category_id)
+            else:
+                query = "INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference, imageLink) VALUES (%s, %s, %s, %s, %s, %s, 0, %s)"
+                data = (name, description, price, session['user_id'], quantity, category_id, item_id)
             cursor.execute(query, data)
 
             query = "UPDATE item i SET i.reference = LAST_INSERT_ID() WHERE i.id = LAST_INSERT_ID();"
             cursor.execute(query)
-
-            query = "SELECT MAX(i.id) FROM item i;"
-            cursor.execute(query)
-            item_id = None
-            for (result, ) in cursor:
-                item_id = result
-
-            if 'file' in request.files:
-                f = request.files['file']
-                if f and allowed_file(f.filename):
-                    f.save(os.path.join(app.config['UPLOAD_FOLDER'], str(item_id)))
 
             query = "SELECT COUNT(*) FROM featuredItem;"
             cursor.execute(query)
@@ -747,7 +758,7 @@ def inventory():
 
     inventory = []
     for (item_id, name, desc, price, quantity, category) in cursor:
-        inventory.append(Item(item_id, name, desc, price, None, quantity, category))
+        inventory.append(Item(item_id, name, desc, price, None, quantity, category, None))
 
     cnx.close()
 
@@ -861,6 +872,11 @@ def edit_listing(item_id):
         query = 'INSERT INTO item (name, description, price, seller_id, quantity, category_id, reference) VALUES (%s, %s, %s, %s, %s, %s, %s);'
         data = (name, description, price, session['user_id'], quantity, category_id, item_id)
         cursor.execute(query, data)
+
+        if old_item.image_link != None:
+            query = 'UPDATE item SET imageLink = %s WHERE reference = %s;'
+            data = (old_item.image_link, item_id)
+            cursor.execute(query, data)
 
         # We use the old item id for the next several queries
         data = (old_item.item_id, )
