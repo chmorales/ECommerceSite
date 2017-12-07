@@ -479,7 +479,7 @@ def search_results(string, category_name):
     # Save the results into a list of items.
     items = []
     for (item_id, name, description, price, quantity) in cursor:
-        items.append(Item(item_id, name, description, price, None, quantity, None))
+        items.append(Item(item_id, name, description, price, None, quantity, None, None))
 
     cnx.close()
     return render_template('search_results.html', items=items, search_string=string, categories=get_categories())
@@ -1005,7 +1005,7 @@ def all():
     cursor.execute(query)
     items = []
     for (item_id, name, description, price, quantity) in cursor:
-        items.append(Item(item_id, name, description, price, None, quantity, None))
+        items.append(Item(item_id, name, description, price, None, quantity, None, None))
     
     cnx.close()
     return render_template('all.html', items=items, categories=get_categories())
