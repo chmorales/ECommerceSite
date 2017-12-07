@@ -1,4 +1,5 @@
 from flask import Flask, flash, redirect, render_template, request, session, abort, redirect, url_for
+from passlib.hash import sha256_crypt
 import pymysql
 from db_connector import get_connector
 from functools import wraps
@@ -129,17 +130,33 @@ def login():
             email = request.form['login_email']
             password = request.form['login_password']
 
-            # Using prepared statements to prevent SQL injection
-            query = ("SELECT u.first_name, u.last_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
-            data = (email, password)
+            # # Using prepared statements to prevent SQL injection
+            # query = ("SELECT u.first_name, u.last_name, u.id FROM person u WHERE u.email_address = %s AND u.password = %s;")
+            # data = (email, password)
+            # cursor.execute(query, data)
+
+            # for (first_name, last_name, user_id) in cursor:
+            #     session['user_id'] = user_id
+            #     session['first_name'] = first_name
+            #     session['last_name'] = last_name
+            #     return redirect(url_for('index'))
+            # error = 'Invalid email and password combonation.'
+            # return render_template('login.html', error=error, create_error=create_error, categories=get_categories())
+
+            # Query for person matching givin email
+            query = ("SELECT u.first_name, u.last_name, u.id, u.password FROM person u WHERE u.email_address = %s;")
+            data = (email)
             cursor.execute(query, data)
 
-            for (first_name, last_name, user_id) in cursor:
+            # Verify password hash
+            for (first_name, last_name, user_id, password_hash) in cursor:
+                if not sha256_crypt.verify(password, password_hash):
+                    break
                 session['user_id'] = user_id
                 session['first_name'] = first_name
                 session['last_name'] = last_name
                 return redirect(url_for('index'))
-            error = 'Invalid email and password combonation.'
+            error = 'Invalid email and password combonation'
             return render_template('login.html', error=error, create_error=create_error, categories=get_categories())
 
         elif 'create_account' in request.form:
@@ -152,6 +169,9 @@ def login():
             password = request.form['create_password']
             first_name = request.form['create_first_name']
             last_name = request.form['create_last_name']
+
+            # Password hashing
+            password = sha256_crypt.hash(password)
 
             try:
                 if len(password) < 8:

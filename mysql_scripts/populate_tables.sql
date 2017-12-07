@@ -11,9 +11,9 @@ INSERT INTO cart (price) VALUES
 
 INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES
     ("Bob", "Admin", "pa", "B.Admin@gmail.com", 1),
-    ("Robert", "Mulieri", "password", "amulieri@gmail.com", 2),
-    ("Chris", "Morales", "password", "cmorales@gmail.com", 3),
-    ("Daniel", "Shank", "password", "dshank@gmail.com", 4);
+    ("Robert", "Mulieri", "$5$rounds=535000$22gPXxvTeOeqxn4L$YG.2B87TeOWmq4GAbQ066Ga.rhMf56hD.QNQLX5t1H3", "amulieri@gmail.com", 2),
+    ("Chris", "Morales", "$5$rounds=535000$nhFyR.sl5IF8EzLh$5/HVRAZigxaEiEze2MIqMZ1fADvEajbEdZqIW59D.M3", "cmorales@gmail.com", 3),
+    ("Daniel", "Shank", "$5$rounds=535000$iW8iQnCu0JcnTlXU$69D2XgYMreeiCRTfvgnqnmDCBs/OuPoCbSSStAGd4t5", "dshank@gmail.com", 4);
 
 INSERT INTO administrator (userId) VALUES
     (1);

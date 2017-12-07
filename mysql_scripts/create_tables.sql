@@ -25,7 +25,7 @@ CREATE TABLE person (
     id INT AUTO_INCREMENT PRIMARY KEY,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
-    password VARCHAR(50) NOT NULL,
+    password VARCHAR(80) NOT NULL,
     email_address VARCHAR(100) UNIQUE NOT NULL,
     cartId INT NOT NULL,
     FOREIGN KEY (cartId) REFERENCES cart(id),
