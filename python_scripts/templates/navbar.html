@@ -31,7 +31,7 @@
             <li><a href="/login">Login / Create Account</a></li>
             {% endif %}
         </ul>
-        <div class="col-md-6 pull-right">
+        <div class="col-md-6">
             <form class="navbar-form" role="search" action="{{ url_for('search') }}" method="post">
                 <select class="form-control" name="search_category" value="{{ request.form.search_category }}">
                     {% for category in categories %}

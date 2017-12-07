@@ -10,7 +10,7 @@ INSERT INTO cart (price) VALUES
     (0.0);
 
 INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES
-    ("Bob", "Admin", "pa", "B.Admin@gmail.com", 1),
+    ("Bob", "Admin", "$5$rounds=535000$GEv87LSEvPTt1hu9$59ZMft5A7vLu.kClsqQqEq9GHMMU2tj85MXy.JFkAa0", "B.Admin@gmail.com", 1),
     ("Robert", "Mulieri", "$5$rounds=535000$22gPXxvTeOeqxn4L$YG.2B87TeOWmq4GAbQ066Ga.rhMf56hD.QNQLX5t1H3", "amulieri@gmail.com", 2),
     ("Chris", "Morales", "$5$rounds=535000$nhFyR.sl5IF8EzLh$5/HVRAZigxaEiEze2MIqMZ1fADvEajbEdZqIW59D.M3", "cmorales@gmail.com", 3),
     ("Daniel", "Shank", "$5$rounds=535000$iW8iQnCu0JcnTlXU$69D2XgYMreeiCRTfvgnqnmDCBs/OuPoCbSSStAGd4t5", "dshank@gmail.com", 4);
