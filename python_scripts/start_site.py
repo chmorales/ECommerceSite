@@ -156,7 +156,7 @@ def login():
                 session['first_name'] = first_name
                 session['last_name'] = last_name
                 return redirect(url_for('index'))
-            error = 'Invalid email and password combonation'
+            error = 'Invalid email and password combonation.'
             return render_template('login.html', error=error, create_error=create_error, categories=get_categories())
 
         elif 'create_account' in request.form:
@@ -170,9 +170,6 @@ def login():
             first_name = request.form['create_first_name']
             last_name = request.form['create_last_name']
 
-            # Password hashing
-            password = sha256_crypt.hash(password)
-
             try:
                 if len(password) < 8:
                     raise PasswordError
@@ -180,6 +177,9 @@ def login():
                 # Create a new cart just for our user.
                 query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
                 cursor.execute(query)
+
+                # Password hashing
+                password = sha256_crypt.hash(password)
 
                 # Insert the new user into the database.
                 query = 'INSERT INTO person (first_name, last_name, password, email_address, cartId) VALUES (%s, %s, %s, %s, LAST_INSERT_ID());'
