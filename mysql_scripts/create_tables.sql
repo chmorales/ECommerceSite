@@ -56,7 +56,7 @@ CREATE TABLE item (
     quantity INT NOT NULL,
     category_id INT NOT NULL,
     listed BOOLEAN NOT NULL DEFAULT TRUE,
-    reference INT NOT NULL,
+    reference INT,
     imageLink TEXT,
     FOREIGN KEY (seller_id) REFERENCES person(id),
     FOREIGN KEY (category_id) REFERENCES category(id),
@@ -64,6 +64,13 @@ CREATE TABLE item (
     CHECK (price > 0),
     CHECK (quantity >= 0)
 );
+
+delimiter $$
+CREATE TRIGGER foo BEFORE INSERT ON item FOR EACH ROW
+    IF (NEW.reference IS NULL) THEN
+        SET NEW.reference = NEW.id;
+    END IF;
+$$
 
 CREATE TABLE purchase (
     buyerId INT NOT NULL,
