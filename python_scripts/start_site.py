@@ -85,6 +85,7 @@ def get_item(cnx, cursor, item_id):
         item = Item(item_id, name, description, price, email_address, quantity, category_name, image_link)
     return item
 
+
 def get_categories():
     cnx = get_connector()
     cursor = cnx.cursor()
@@ -96,6 +97,7 @@ def get_categories():
     categories.insert(0, 'All')
     cnx.close()
     return categories
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -117,6 +119,7 @@ def index():
 
 class PasswordError(Exception):
     pass
+
 
 @app.route("/login", methods=['GET', 'POST'])
 def login():
@@ -280,6 +283,7 @@ def profile():
 
     return render_template('profile.html', reviews=reviews, purchases=purchases, messages=messages, categories=get_categories())
 
+
 @app.route("/message/<int:other_id>", methods=['POST', 'GET'])
 @requires_log_in
 def message(other_id):
@@ -320,7 +324,8 @@ def message(other_id):
     cnx.close()
 
     return render_template('message.html', messages=messages, categories=get_categories())
-    
+
+
 @app.route("/message_user/<int:other_id>", methods=['POST', 'GET'])
 @requires_log_in
 def message_user(other_id):
@@ -361,6 +366,7 @@ def message_user(other_id):
 
     return render_template('message.html', messages=messages, categories=get_categories())
 
+
 @app.route("/cart", methods=['POST', 'GET'])
 @requires_log_in
 def shopping_cart():
@@ -373,6 +379,31 @@ def shopping_cart():
 
     # User is trying to buy the cart.
     if request.method == 'POST':
+        user_id = session['user_id']
+
+        # Get the current user's cartId.
+        query = 'SELECT p.cartId FROM person p WHERE p.id = %s;'
+        data = (user_id, )
+        cursor.execute(query, data)
+        cart_id = None
+        for (result, ) in cursor:
+            cart_id = result
+
+        query = ("SELECT * "
+                 "FROM takenItem t INNER JOIN cart c ON t.cartId = c.id "
+                 "WHERE c.id = %s")
+        data = (cart_id, )
+        empty = True
+        cursor.execute(query, data)
+
+        for item in cursor:
+            empty = False
+
+        if empty:
+            cnx.commit()
+            cnx.close()
+            return redirect(url_for('shopping_cart'))
+
         return redirect(url_for('checkout'))
 
     # Gets the current user's cartId.
@@ -971,7 +1002,7 @@ def remove_listing(item_id):
 @app.route('/checkout', methods=['GET', 'POST'])
 @requires_log_in
 def checkout():
-    
+
     if request.method == 'POST':
 
         cnx = get_connector()
@@ -986,6 +1017,21 @@ def checkout():
         cart_id = None
         for (result, ) in cursor:
             cart_id = result
+
+        query = ("SELECT * "
+                 "FROM takenItem t INNER JOIN cart c ON t.cartId = c.id "
+                 "WHERE c.id = %s FOR UPDATE")
+        data = (cart_id, )
+        empty = True
+        cursor.execute(query, data)
+
+        for item in cursor:
+            empty = False
+
+        if empty:
+            cnx.commit()
+            cnx.close()
+            return redirect(url_for('shopping_cart'))
 
         query = 'INSERT INTO cart (price) VALUES (%f);' % (0.0)
         cursor.execute(query)
